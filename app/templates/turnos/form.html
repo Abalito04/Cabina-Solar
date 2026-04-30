@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="h3 mb-3">{{ 'Editar Turno' if turno else 'Nuevo Turno' }}</h1>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Cliente</label>
+                <!-- Si estamos editando, no dejamos cambiar de cliente -->
+                {% if turno %}
+                    <input type="text" class="form-control" value="{{ turno.cliente.nombre_completo }}" disabled>
+                    <input type="hidden" name="cliente_id" value="{{ turno.cliente_id }}">
+                {% else %}
+                    <select class="form-select" name="cliente_id" required>
+                        <option value="">Seleccionar...</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}">{{ cliente.nombre_completo }} - saldo {{ cliente.saldo_sesiones }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Fecha y hora del turno</label>
+                <!-- Formateamos la fecha a formato ISO para que HTML lo agarre -->
+                <input class="form-control" type="datetime-local" name="fecha_hora_turno" 
+                       value="{{ turno.fecha_hora_turno.strftime('%Y-%m-%dT%H:%M') if turno else '' }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Estado</label>
+                <select class="form-select" name="estado" required>
+                    <option value="realizado" {% if turno and turno.estado == 'realizado' %}selected{% endif %}>Realizado</option>
+                    <option value="pendiente" {% if turno and turno.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="cancelado" {% if turno and turno.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Observación</label>
+                <input class="form-control" name="observacion" placeholder="Opcional" value="{{ turno.observacion if turno else '' }}">
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Guardar turno</button>
+                <a class="btn btn-outline-secondary" href="{{ url_for('turnos.listar') }}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

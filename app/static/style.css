@@ -1,0 +1,21 @@
+body {
+    background: #f5f7fb;
+}
+
+.card {
+    border: none;
+    border-radius: 1rem;
+}
+
+.table thead th {
+    background: #f0f3f9;
+    white-space: nowrap;
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
+
+.display-6 {
+    font-weight: 700;
+}

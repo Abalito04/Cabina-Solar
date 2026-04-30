@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="h3 mb-3">{{ 'Editar producto' if producto else 'Nuevo producto' }}</h1>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">Nombre</label>
+                <input class="form-control" name="nombre" required value="{{ producto.nombre if producto else '' }}">
+            </div>
+            <div class="col-md-7">
+                <label class="form-label">Descripción</label>
+                <input class="form-control" name="descripcion" placeholder="Ej: Incluye cremas, válido por 30 días..." value="{{ producto.descripcion if producto and producto.descripcion else '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Cantidad de sesiones</label>
+                <input class="form-control" type="number" min="1" name="cantidad_sesiones" required value="{{ producto.cantidad_sesiones if producto else '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Precio</label>
+                <input class="form-control" type="number" step="0.01" min="0" name="precio" required value="{{ producto.precio if producto else '' }}">
+            </div>
+            <div class="col-12 form-check ms-1 mt-4">
+                <input class="form-check-input" type="checkbox" name="activo" id="activo" {% if producto and producto.activo %}checked{% elif not producto %}checked{% endif %}>
+                <label class="form-check-label" for="activo">Producto activo</label>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Guardar</button>
+                <a class="btn btn-outline-secondary" href="{{ url_for('productos.listar') }}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Panel principal</h1>
+        <p class="text-muted mb-0">Base inicial para administrar clientes, sesiones, ventas y turnos.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h2 class="h6">Clientes</h2><p class="display-6">{{ clientes }}</p></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h2 class="h6">Productos</h2><p class="display-6">{{ productos }}</p></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h2 class="h6">Ventas</h2><p class="display-6">{{ ventas }}</p></div></div></div>
+    <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><h2 class="h6">Turnos</h2><p class="display-6">{{ turnos }}</p></div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Accesos rápidos</h2>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a class="btn btn-primary" href="{{ url_for('clientes.nuevo') }}">Nuevo cliente</a>
+                    <a class="btn btn-outline-primary" href="{{ url_for('productos.nuevo') }}">Nuevo producto</a>
+                    <a class="btn btn-outline-success" href="{{ url_for('ventas.nueva') }}">Nueva venta</a>
+                    <a class="btn btn-outline-dark" href="{{ url_for('turnos.nuevo') }}">Nuevo turno</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Últimos clientes</h2>
+                <ul class="list-group list-group-flush mt-3">
+                    {% for cliente in ultimos_clientes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>{{ cliente.nombre_completo }}</span>
+                            <span class="badge text-bg-secondary">Saldo: {{ cliente.saldo_sesiones }}</span>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item px-0">Todavía no hay clientes cargados.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
