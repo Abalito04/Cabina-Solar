@@ -46,7 +46,6 @@ def listar():
 
 @ventas_bp.route('/nueva', methods=['GET', 'POST'])
 def nueva():
-    # Permite pre-seleccionar cliente si venimos del detalle del cliente
     cliente_preseleccionado = request.args.get('cliente_id', type=int)
     clientes = Cliente.query.order_by(Cliente.apellido, Cliente.nombre).all()
     productos = Producto.query.filter_by(activo=True).order_by(Producto.nombre).all()
@@ -56,7 +55,6 @@ def nueva():
         producto_id = int(request.form['producto_id'])
         medio_pago = request.form['medio_pago']
         monto = float(request.form['monto'])
-        fecha=datetime.fromisoformat(fecha) if fecha else datetime.now(),
 
         producto = Producto.query.get_or_404(producto_id)
         cliente = Cliente.query.get_or_404(cliente_id)
