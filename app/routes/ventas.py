@@ -56,7 +56,7 @@ def nueva():
         producto_id = int(request.form['producto_id'])
         medio_pago = request.form['medio_pago']
         monto = float(request.form['monto'])
-        fecha = request.form.get('fecha')
+        fecha=datetime.fromisoformat(fecha) if fecha else datetime.now(),
 
         producto = Producto.query.get_or_404(producto_id)
         cliente = Cliente.query.get_or_404(cliente_id)
@@ -68,7 +68,7 @@ def nueva():
             producto_id=producto_id,
             sesiones_compradas=producto.cantidad_sesiones,
             total=producto.precio,
-            fecha=datetime.fromisoformat(fecha) if fecha else datetime.now(),
+            fecha=datetime.now(),
         )
         db.session.add(venta)
         db.session.flush()
