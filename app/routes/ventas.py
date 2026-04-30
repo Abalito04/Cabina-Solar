@@ -171,12 +171,12 @@ def exportar_excel():
          for v in ventas]
     )
 
-    # Hoja 3: Pagos
+        # Hoja 3: Pagos
     pagos = Pago.query.order_by(Pago.fecha.desc()).all()
     crear_hoja(wb, 'Pagos',
-        ['ID', 'Fecha', 'Cliente', 'Venta ID', 'Medio de Pago', 'Monto $'],
+        ['ID', 'Fecha', 'Cliente', 'Venta ID', 'Medio de Pago', 'Monto $', 'Comprobante'],
         [(p.id, p.fecha.strftime('%d/%m/%Y %H:%M'), p.venta.cliente.nombre_completo,
-          p.venta_id, p.medio_pago, p.monto)
+          p.venta_id, p.medio_pago, p.monto, p.comprobante or '')
          for p in pagos]
     )
 
@@ -211,18 +211,20 @@ def exportar_excel():
          for t in turnos_por_cliente]
     )
 
-    # Hoja 7: Medios de pago por cliente
-    # Agrupamos todos los pagos de cada cliente y sumamos por medio de pago
+        # Hoja 7: Medios de pago por cliente
     filas_medios = []
     for cliente in clientes:
-        # Acumulamos los montos por medio de pago para este cliente
         totales = {}
         for venta in cliente.ventas:
             for pago in venta.pagos:
-                medio = pago.medio_pago.capitalize()
+                # Normalizamos: mercado_pago viejo lo mostramos igual que transferencia
+                medio = pago.medio_pago
+                if medio == 'mercado_pago':
+                    medio = 'transferencia'
+                medio = medio.replace('_', ' ').capitalize()
                 totales[medio] = totales.get(medio, 0) + pago.monto
 
-        if totales:  # Solo incluimos clientes que hicieron al menos un pago
+        if totales:
             for medio, total in sorted(totales.items()):
                 filas_medios.append((
                     cliente.nombre_completo,

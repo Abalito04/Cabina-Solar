@@ -28,9 +28,8 @@
                 <select name="medio_pago" class="form-select form-select-sm">
                     <option value="">Todos</option>
                     <option value="efectivo" {% if medio_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
-                    <option value="transferencia" {% if medio_pago == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                    <option value="transferencia" {% if medio_pago == 'transferencia' %}selected{% endif %}>Transferencia / MercadoPago</option>
                     <option value="tarjeta" {% if medio_pago == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
-                    <option value="mercado_pago" {% if medio_pago == 'mercado_pago' %}selected{% endif %}>Mercado Pago</option>
                 </select>
             </div>
             <div class="col-md-2">
