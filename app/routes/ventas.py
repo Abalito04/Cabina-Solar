@@ -4,7 +4,7 @@ from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from ..extensions import db
-from ..models import Cliente, Producto, Venta, Pago
+from ..models import Cliente, Producto, Venta, Pago, TurnoSesion
 
 ventas_bp = Blueprint('ventas', __name__)
 
@@ -153,7 +153,7 @@ def exportar_excel():
 
     # Hoja 1: Clientes
     clientes = Cliente.query.order_by(Cliente.apellido).all()
-    crear_hoja(wb, 'Clientes', 
+    crear_hoja(wb, 'Clientes',
         ['ID', 'Apellido', 'Nombre', 'DNI', 'Correo', 'Teléfono', 'Sesiones Restantes', 'Deuda $'],
         [(c.id, c.apellido, c.nombre, c.dni, c.correo, c.telefono,
           c.saldo_sesiones, round(abs(c.saldo_pesos), 2) if c.saldo_pesos < 0 else 0)
@@ -180,7 +180,6 @@ def exportar_excel():
 
     # Hoja 4: Turnos
     turnos = TurnoSesion.query.order_by(TurnoSesion.fecha_hora_turno.desc()).all()
-    from ..models import TurnoSesion as TS
     crear_hoja(wb, 'Turnos',
         ['ID', 'Fecha y Hora', 'Cliente', 'Estado', 'Observación'],
         [(t.id, t.fecha_hora_turno.strftime('%d/%m/%Y %H:%M'), t.cliente.nombre_completo,
@@ -195,6 +194,44 @@ def exportar_excel():
         [(p.id, p.nombre, p.descripcion or '', p.cantidad_sesiones, p.precio,
           'Sí' if p.activo else 'No')
          for p in productos]
+    )
+
+    # Hoja 6: Historial de turnos por cliente
+    # Una fila por cada turno, ordenado por cliente y luego por fecha
+    turnos_por_cliente = TurnoSesion.query.join(Cliente).order_by(
+        Cliente.apellido, Cliente.nombre, TurnoSesion.fecha_hora_turno.desc()
+    ).all()
+    crear_hoja(wb, 'Turnos por cliente',
+        ['Cliente', 'DNI', 'Fecha y Hora', 'Estado', 'Observación'],
+        [(t.cliente.nombre_completo, t.cliente.dni or '',
+          t.fecha_hora_turno.strftime('%d/%m/%Y %H:%M'),
+          t.estado, t.observacion or '')
+         for t in turnos_por_cliente]
+    )
+
+    # Hoja 7: Medios de pago por cliente
+    # Agrupamos todos los pagos de cada cliente y sumamos por medio de pago
+    filas_medios = []
+    for cliente in clientes:
+        # Acumulamos los montos por medio de pago para este cliente
+        totales = {}
+        for venta in cliente.ventas:
+            for pago in venta.pagos:
+                medio = pago.medio_pago.capitalize()
+                totales[medio] = totales.get(medio, 0) + pago.monto
+
+        if totales:  # Solo incluimos clientes que hicieron al menos un pago
+            for medio, total in sorted(totales.items()):
+                filas_medios.append((
+                    cliente.nombre_completo,
+                    cliente.dni or '',
+                    medio,
+                    round(total, 2)
+                ))
+
+    crear_hoja(wb, 'Medios de pago por cliente',
+        ['Cliente', 'DNI', 'Medio de Pago', 'Total Pagado $'],
+        filas_medios
     )
 
     # Borramos la hoja en blanco que crea openpyxl por defecto
