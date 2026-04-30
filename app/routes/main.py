@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from flask import Blueprint, render_template
+from flask_login import login_required, current_user
 from ..models import Cliente, Producto, Venta, TurnoSesion, Pago
 
 
@@ -11,33 +12,33 @@ MESES = ['enero','febrero','marzo','abril','mayo','junio',
 
 
 @main_bp.route('/')
+@login_required
 def index():
     hoy = date.today()
     fecha_texto = f"{DIAS[hoy.weekday()]} {hoy.day} de {MESES[hoy.month - 1]} de {hoy.year}"
+    eid = current_user.empresa_id
 
-    # Contadores generales
-    total_clientes = Cliente.query.count()
-    total_productos = Producto.query.count()
-    total_ventas = Venta.query.count()
+    total_clientes = Cliente.query.filter_by(empresa_id=eid).count()
+    total_productos = Producto.query.filter_by(empresa_id=eid).count()
+    total_ventas = Venta.query.join(Cliente).filter(Cliente.empresa_id == eid).count()
 
-    # Turnos de hoy
-    turnos_hoy = TurnoSesion.query.filter(
+    turnos_hoy = TurnoSesion.query.join(Cliente).filter(
+        Cliente.empresa_id == eid,
         db_date_trunc(TurnoSesion.fecha_hora_turno) == hoy
     ).order_by(TurnoSesion.fecha_hora_turno).all()
 
-    # Ingresos del día
-    pagos_hoy = Pago.query.filter(
+    pagos_hoy = Pago.query.join(Venta).join(Cliente).filter(
+        Cliente.empresa_id == eid,
         db_date_trunc(Pago.fecha) == hoy
     ).all()
     ingresos_hoy = sum(p.monto for p in pagos_hoy)
 
-    # Clientes con deuda pendiente
-    clientes_todos = Cliente.query.all()
+    clientes_todos = Cliente.query.filter_by(empresa_id=eid).all()
     clientes_con_deuda = [c for c in clientes_todos if c.saldo_pesos < 0]
     deuda_total = sum(abs(c.saldo_pesos) for c in clientes_con_deuda)
 
-    # Últimos clientes registrados
-    ultimos_clientes = Cliente.query.order_by(Cliente.id.desc()).limit(5).all()
+    ultimos_clientes = Cliente.query.filter_by(empresa_id=eid)\
+        .order_by(Cliente.id.desc()).limit(5).all()
 
     return render_template(
         'index.html',
