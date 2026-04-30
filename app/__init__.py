@@ -1,5 +1,5 @@
 from flask import Flask
-from .extensions import db
+from .extensions import db, login_manager, migrate
 from .routes.main import main_bp
 from .routes.clientes import clientes_bp
 from .routes.productos import productos_bp
@@ -14,21 +14,29 @@ def create_app():
     app.config['SECRET_KEY'] = 'cambiar-por-una-clave-segura'
 
     db.init_app(app)
+    login_manager.init_app(app)
+    migrate.init_app(app, db)
+
+    # User loader — Flask-Login lo usa para reconstruir el usuario desde la sesión
+    @login_manager.user_loader
+    def load_user(user_id):
+        from .models import User
+        return User.query.get(int(user_id))
 
     app.register_blueprint(main_bp)
     app.register_blueprint(clientes_bp, url_prefix='/clientes')
     app.register_blueprint(productos_bp, url_prefix='/productos')
     app.register_blueprint(ventas_bp, url_prefix='/ventas')
     app.register_blueprint(turnos_bp, url_prefix='/turnos')
+    from .routes.auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     with app.app_context():
         from . import models
-        db.create_all()
+        #db.create_all()
 
-    # ── Helpers de Jinja ─────────────────────────────────────────────────
-    @app.template_global()          # ← SIN línea en blanco antes del def
+    @app.template_global()
     def google_calendar_url(turno):
-        """Genera el link para agregar el turno directamente a Google Calendar."""
         from urllib.parse import urlencode
         from datetime import timedelta
 
@@ -42,5 +50,14 @@ def create_app():
             'details': turno.observacion or 'Sesión de cabina solar.',
         }
         return f'https://calendar.google.com/calendar/render?{urlencode(params)}'
+    
+    # Al final de create_app(), antes del return:
+    @app.before_request
+    def require_login():
+        from flask_login import current_user
+        from flask import request, redirect, url_for
+        public = ['auth.login', 'static']
+        if not current_user.is_authenticated and request.endpoint not in public:
+            return redirect(url_for('auth.login'))
 
     return app

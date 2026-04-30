@@ -1,9 +1,11 @@
 from datetime import datetime
 from .extensions import db
+from flask_login import UserMixin
 
 
 class Cliente(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
     nombre = db.Column(db.String(80), nullable=False)
     apellido = db.Column(db.String(80), nullable=False)
     dni = db.Column(db.String(20), unique=True, nullable=False)
@@ -35,6 +37,7 @@ class Cliente(db.Model):
 
 class Producto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True)
     nombre = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.String(255)) 
     cantidad_sesiones = db.Column(db.Integer, nullable=False)
@@ -71,3 +74,29 @@ class TurnoSesion(db.Model):
     estado = db.Column(db.String(30), nullable=False, default='realizado')
     observacion = db.Column(db.String(200))
     creado_en = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    
+#Empresa y User
+class Empresa(db.Model):
+    id       = db.Column(db.Integer, primary_key=True)
+    nombre   = db.Column(db.String(120), nullable=False)
+    slug     = db.Column(db.String(60), unique=True, nullable=False)  # para URLs futuras
+    activa   = db.Column(db.Boolean, default=True)
+
+    usuarios  = db.relationship('User', backref='empresa', lazy=True)
+    clientes  = db.relationship('Cliente', backref='empresa', lazy=True)
+    productos = db.relationship('Producto', backref='empresa', lazy=True)
+
+class User(UserMixin, db.Model):
+    id          = db.Column(db.Integer, primary_key=True)
+    empresa_id  = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=False)
+    username    = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    es_admin    = db.Column(db.Boolean, default=False)
+
+    def set_password(self, password):
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.password_hash, password)
