@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
+from flask_login import login_required, current_user
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -10,14 +11,14 @@ ventas_bp = Blueprint('ventas', __name__)
 
 
 @ventas_bp.route('/')
+@login_required
 def listar():
-    # Filtros opcionales
     cliente_id = request.args.get('cliente_id', type=int)
     medio_pago = request.args.get('medio_pago', '')
     fecha_desde = request.args.get('fecha_desde', '')
     fecha_hasta = request.args.get('fecha_hasta', '')
 
-    query = Venta.query
+    query = Venta.query.join(Cliente).filter(Cliente.empresa_id == current_user.empresa_id)
 
     if cliente_id:
         query = query.filter(Venta.cliente_id == cliente_id)
@@ -29,7 +30,8 @@ def listar():
         query = query.join(Pago).filter(Pago.medio_pago == medio_pago)
 
     ventas = query.order_by(Venta.fecha.desc()).all()
-    clientes = Cliente.query.order_by(Cliente.apellido, Cliente.nombre).all()
+    clientes = Cliente.query.filter_by(empresa_id=current_user.empresa_id)\
+        .order_by(Cliente.apellido, Cliente.nombre).all()
     total_filtrado = sum(v.total for v in ventas)
 
     return render_template(
@@ -45,10 +47,13 @@ def listar():
 
 
 @ventas_bp.route('/nueva', methods=['GET', 'POST'])
+@login_required
 def nueva():
     cliente_preseleccionado = request.args.get('cliente_id', type=int)
-    clientes = Cliente.query.order_by(Cliente.apellido, Cliente.nombre).all()
-    productos = Producto.query.filter_by(activo=True).order_by(Producto.nombre).all()
+    clientes = Cliente.query.filter_by(empresa_id=current_user.empresa_id)\
+        .order_by(Cliente.apellido, Cliente.nombre).all()
+    productos = Producto.query.filter_by(activo=True, empresa_id=current_user.empresa_id)\
+        .order_by(Producto.nombre).all()
 
     if request.method == 'POST':
         cliente_id = int(request.form['cliente_id'])
@@ -56,8 +61,8 @@ def nueva():
         medio_pago = request.form['medio_pago']
         monto = float(request.form['monto'])
 
-        producto = Producto.query.get_or_404(producto_id)
-        cliente = Cliente.query.get_or_404(cliente_id)
+        producto = Producto.query.filter_by(id=producto_id, empresa_id=current_user.empresa_id).first_or_404()
+        cliente = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
 
         cliente.saldo_sesiones += producto.cantidad_sesiones
 
@@ -92,8 +97,9 @@ def nueva():
 
 
 @ventas_bp.route('/pago_deuda/<int:cliente_id>', methods=['POST'])
+@login_required
 def pago_deuda(cliente_id):
-    cliente = Cliente.query.get_or_404(cliente_id)
+    cliente = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
     monto_a_pagar = float(request.form['monto'])
     medio_pago = request.form['medio_pago']
 
@@ -134,7 +140,9 @@ def pago_deuda(cliente_id):
 # ─── EXPORTACIÓN A EXCEL ──────────────────────────────────────────────────────
 
 @ventas_bp.route('/exportar/excel')
+@login_required
 def exportar_excel():
+    eid = current_user.empresa_id
     wb = openpyxl.Workbook()
 
     estilo_header = Font(bold=True, color='FFFFFF')
@@ -153,8 +161,7 @@ def exportar_excel():
                 ws.cell(row=fila_idx, column=col_idx, value=valor)
         return ws
 
-    # Hoja 1: Clientes
-    clientes = Cliente.query.order_by(Cliente.apellido).all()
+    clientes = Cliente.query.filter_by(empresa_id=eid).order_by(Cliente.apellido).all()
     crear_hoja(wb, 'Clientes',
         ['ID', 'Apellido', 'Nombre', 'DNI', 'Correo', 'Teléfono', 'Sesiones Restantes', 'Deuda $'],
         [(c.id, c.apellido, c.nombre, c.dni, c.correo, c.telefono,
@@ -162,8 +169,8 @@ def exportar_excel():
          for c in clientes]
     )
 
-    # Hoja 2: Ventas
-    ventas = Venta.query.order_by(Venta.fecha.desc()).all()
+    ventas = Venta.query.join(Cliente).filter(Cliente.empresa_id == eid)\
+        .order_by(Venta.fecha.desc()).all()
     crear_hoja(wb, 'Ventas',
         ['ID', 'Fecha', 'Cliente', 'Producto', 'Sesiones', 'Total $'],
         [(v.id, v.fecha.strftime('%d/%m/%Y %H:%M'), v.cliente.nombre_completo,
@@ -171,8 +178,8 @@ def exportar_excel():
          for v in ventas]
     )
 
-        # Hoja 3: Pagos
-    pagos = Pago.query.order_by(Pago.fecha.desc()).all()
+    pagos = Pago.query.join(Venta).join(Cliente).filter(Cliente.empresa_id == eid)\
+        .order_by(Pago.fecha.desc()).all()
     crear_hoja(wb, 'Pagos',
         ['ID', 'Fecha', 'Cliente', 'Venta ID', 'Medio de Pago', 'Monto $', 'Comprobante'],
         [(p.id, p.fecha.strftime('%d/%m/%Y %H:%M'), p.venta.cliente.nombre_completo,
@@ -180,8 +187,8 @@ def exportar_excel():
          for p in pagos]
     )
 
-    # Hoja 4: Turnos
-    turnos = TurnoSesion.query.order_by(TurnoSesion.fecha_hora_turno.desc()).all()
+    turnos = TurnoSesion.query.join(Cliente).filter(Cliente.empresa_id == eid)\
+        .order_by(TurnoSesion.fecha_hora_turno.desc()).all()
     crear_hoja(wb, 'Turnos',
         ['ID', 'Fecha y Hora', 'Cliente', 'Estado', 'Observación'],
         [(t.id, t.fecha_hora_turno.strftime('%d/%m/%Y %H:%M'), t.cliente.nombre_completo,
@@ -189,8 +196,7 @@ def exportar_excel():
          for t in turnos]
     )
 
-    # Hoja 5: Productos
-    productos = Producto.query.order_by(Producto.nombre).all()
+    productos = Producto.query.filter_by(empresa_id=eid).order_by(Producto.nombre).all()
     crear_hoja(wb, 'Productos',
         ['ID', 'Nombre', 'Descripción', 'Sesiones', 'Precio $', 'Activo'],
         [(p.id, p.nombre, p.descripcion or '', p.cantidad_sesiones, p.precio,
@@ -198,11 +204,8 @@ def exportar_excel():
          for p in productos]
     )
 
-    # Hoja 6: Historial de turnos por cliente
-    # Una fila por cada turno, ordenado por cliente y luego por fecha
-    turnos_por_cliente = TurnoSesion.query.join(Cliente).order_by(
-        Cliente.apellido, Cliente.nombre, TurnoSesion.fecha_hora_turno.desc()
-    ).all()
+    turnos_por_cliente = TurnoSesion.query.join(Cliente).filter(Cliente.empresa_id == eid)\
+        .order_by(Cliente.apellido, Cliente.nombre, TurnoSesion.fecha_hora_turno.desc()).all()
     crear_hoja(wb, 'Turnos por cliente',
         ['Cliente', 'DNI', 'Fecha y Hora', 'Estado', 'Observación'],
         [(t.cliente.nombre_completo, t.cliente.dni or '',
@@ -211,19 +214,16 @@ def exportar_excel():
          for t in turnos_por_cliente]
     )
 
-        # Hoja 7: Medios de pago por cliente
     filas_medios = []
     for cliente in clientes:
         totales = {}
         for venta in cliente.ventas:
             for pago in venta.pagos:
-                # Normalizamos: mercado_pago viejo lo mostramos igual que transferencia
                 medio = pago.medio_pago
                 if medio == 'mercado_pago':
                     medio = 'transferencia'
                 medio = medio.replace('_', ' ').capitalize()
                 totales[medio] = totales.get(medio, 0) + pago.monto
-
         if totales:
             for medio, total in sorted(totales.items()):
                 filas_medios.append((
@@ -238,7 +238,6 @@ def exportar_excel():
         filas_medios
     )
 
-    # Borramos la hoja en blanco que crea openpyxl por defecto
     if 'Sheet' in wb.sheetnames:
         del wb['Sheet']
 
