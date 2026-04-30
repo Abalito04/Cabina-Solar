@@ -27,11 +27,18 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label">Estado</label>
-                <select class="form-select" name="estado" required>
-                    <option value="realizado" {% if turno and turno.estado == 'realizado' %}selected{% endif %}>Realizado</option>
-                    <option value="pendiente" {% if turno and turno.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
-                    <option value="cancelado" {% if turno and turno.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
-                </select>
+                {% if turno %}
+                    <!-- Solo mostramos el selector al EDITAR -->
+                    <select class="form-select" name="estado" required>
+                        <option value="pendiente" {% if turno.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="realizado" {% if turno.estado == 'realizado' %}selected{% endif %}>Realizado</option>
+                        <option value="cancelado" {% if turno.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                {% else %}
+                    <!-- Al CREAR siempre es pendiente, sin opción -->
+                    <input type="hidden" name="estado" value="pendiente">
+                    <input class="form-control" type="text" value="Pendiente" disabled>
+                {% endif %}
             </div>
             <div class="col-md-8">
                 <label class="form-label">Observación</label>

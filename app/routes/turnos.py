@@ -33,20 +33,14 @@ def nuevo():
         turno = TurnoSesion(
             cliente_id=cliente_id,
             fecha_hora_turno=datetime.fromisoformat(fecha_hora),
-            estado=estado,
-            observacion=observacion,
+            estado='pendiente',
+            observacion=observacion or None,
         )
         db.session.add(turno)
         db.session.commit()
-        
-        if estado == 'realizado':
-            flash('Turno registrado correctamente. Se descontó una sesión.', 'success')
-        else:
-            flash('Turno registrado correctamente.', 'success')
-            
+        flash('Turno creado correctamente.', 'success')
         return redirect(url_for('turnos.listar'))
-
-    return render_template('turnos/form.html', clientes=clientes)
+    return render_template('turnos/form.html', turno=None, clientes=clientes)
 
 
 @turnos_bp.route('/<int:turno_id>/marcar_realizado', methods=['POST'])
