@@ -170,6 +170,7 @@ h1, h2, h3, h4, h5 {
     border-color: var(--cs-border) !important;
     color: var(--cs-text-muted) !important;
     border-radius: var(--cs-radius) !important;
+    background: var(--cs-surface-2) !important;   /* ← esto es todo */
 }
 .btn-outline-secondary:hover {
     background: var(--cs-border) !important;
