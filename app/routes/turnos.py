@@ -103,3 +103,28 @@ def editar(turno_id):
         return redirect(url_for('turnos.listar'))
         
     return render_template('turnos/form.html', turno=turno)
+
+# Atajo rápido usado desde el Dashboard — marca realizado
+@turnos_bp.route('/<int:turno_id>/realizar_rapido', methods=['POST'])
+def realizar_rapido(turno_id):
+    turno = TurnoSesion.query.get_or_404(turno_id)
+    if turno.estado == 'pendiente':
+        if turno.cliente.saldo_sesiones <= 0:
+            flash(f'{turno.cliente.nombre_completo} no tiene sesiones disponibles.', 'danger')
+            return redirect(url_for('main.index'))
+        turno.estado = 'realizado'
+        turno.cliente.saldo_sesiones -= 1
+        db.session.commit()
+        flash(f'Turno de {turno.cliente.nombre_completo} marcado como realizado.', 'success')
+    return redirect(url_for('main.index'))
+
+
+# Atajo rápido usado desde el Dashboard — cancela el turno
+@turnos_bp.route('/<int:turno_id>/cancelar_rapido', methods=['POST'])
+def cancelar_rapido(turno_id):
+    turno = TurnoSesion.query.get_or_404(turno_id)
+    if turno.estado == 'pendiente':
+        turno.estado = 'cancelado'
+        db.session.commit()
+        flash(f'Turno de {turno.cliente.nombre_completo} cancelado.', 'warning')
+    return redirect(url_for('main.index'))

@@ -15,28 +15,40 @@
                 <strong>Tel:</strong> {{ cliente.telefono or 'No registrado' }} | 
                 <strong>Email:</strong> {{ cliente.correo or 'No registrado' }}
             </p>
-            
-                        <!-- Reemplazar el cartel de deuda simple por este formulario -->
+
             {% if cliente.saldo_pesos < 0 %}
             <div class="mt-3 p-3 border border-danger rounded bg-white shadow-sm">
                 <div class="text-danger mb-2">
                     <strong>⚠️ Deuda pendiente:</strong> -${{ '%.2f'|format(cliente.saldo_pesos|abs) }}
                 </div>
-                <form action="{{ url_for('ventas.pago_deuda', cliente_id=cliente.id) }}" method="post" class="d-flex align-items-center gap-2">
-                    <select name="medio_pago" class="form-select form-select-sm" style="width: auto;" required>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="transferencia">Transf.</option>
-                        <option value="tarjeta">Tarjeta</option>
-                    </select>
-                    <div class="input-group input-group-sm" style="width: 140px;">
-                        <span class="input-group-text">$</span>
-                        <input type="number" step="0.01" max="{{ cliente.saldo_pesos|abs }}" class="form-control" name="monto" placeholder="Monto" required>
+                <form action="{{ url_for('ventas.pago_deuda', cliente_id=cliente.id) }}" method="post">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <select name="medio_pago" id="medio_pago_deuda" class="form-select form-select-sm" style="width: auto;" required onchange="toggleComprobanteDeuda()">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transf.</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="mercado_pago">Mercado Pago</option>
+                        </select>
+                        <div class="input-group input-group-sm" style="width: 140px;">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" max="{{ cliente.saldo_pesos|abs }}" class="form-control" name="monto" placeholder="Monto" required>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-success">Cobrar</button>
                     </div>
-                    <button type="submit" class="btn btn-sm btn-success">Cobrar</button>
+                    <div id="campo_comprobante_deuda" class="mt-2" style="display:none;">
+                        <input class="form-control form-control-sm" name="comprobante" placeholder="Nro. o comprobante de transferencia">
+                    </div>
                 </form>
+                <script>
+                function toggleComprobanteDeuda() {
+                    const medio = document.getElementById('medio_pago_deuda').value;
+                    const campo = document.getElementById('campo_comprobante_deuda');
+                    campo.style.display = (medio === 'transferencia') ? 'block' : 'none';
+                }
+                </script>
             </div>
             {% endif %}
-            
+
         </div>
         <div class="text-center">
             <span class="d-block text-muted small text-uppercase">Sesiones Restantes</span>
@@ -46,7 +58,7 @@
 </div>
 
 <div class="row g-4">
-        <!-- Columna: Historial de Compras -->
+    <!-- Columna: Historial de Compras -->
     <div class="col-lg-6">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -64,15 +76,17 @@
                         <div class="text-muted small">
                             <strong>Fecha de compra:</strong> {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }} <br>
                             <strong>Total a pagar:</strong> ${{ '%.2f'|format(venta.total) }}<br>
-                            
+
                             <div class="mt-2 mb-1 border-bottom pb-1"><strong>Registro de pagos:</strong></div>
                             <ul class="mb-0 ps-3">
                             {% for pago in venta.pagos %}
                                 <li>
-                                    <!-- Aca mostramos la fecha exacta en la que se hizo el pago -->
                                     {{ pago.fecha.strftime('%d/%m/%Y %H:%M') }} — 
                                     {{ pago.medio_pago|capitalize }}: 
                                     <span class="text-dark fw-bold">${{ '%.2f'|format(pago.monto) }}</span>
+                                    {% if pago.comprobante %}
+                                        <span class="text-muted small">(Comp: {{ pago.comprobante }})</span>
+                                    {% endif %}
                                 </li>
                             {% else %}
                                 <li class="text-danger">Aún no se registraron pagos para esta venta.</li>

@@ -76,6 +76,7 @@ def nueva():
             medio_pago=medio_pago,
             monto=monto,
             fecha=venta.fecha,
+            comprobante=request.form.get('comprobante', '').strip() or None,
         )
         db.session.add(pago)
         db.session.commit()
@@ -119,6 +120,7 @@ def pago_deuda(cliente_id):
                 venta_id=venta.id,
                 medio_pago=medio_pago,
                 monto=pago_a_aplicar,
+                comprobante=request.form.get('comprobante', '').strip() or None,
                 fecha=datetime.now()
             )
             db.session.add(nuevo_pago)

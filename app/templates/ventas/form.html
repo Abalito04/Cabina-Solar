@@ -27,15 +27,28 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-6">
+                        <div class="col-md-6">
                 <label class="form-label">Medio de pago</label>
-                <select class="form-select" name="medio_pago" required>
+                <select class="form-select" name="medio_pago" id="medio_pago" required onchange="toggleComprobante()">
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
                     <option value="tarjeta">Tarjeta</option>
                     <option value="mercado_pago">Mercado Pago</option>
                 </select>
             </div>
+            <!-- Campo que aparece solo cuando se elige Transferencia -->
+            <div class="col-md-6" id="campo_comprobante" style="display:none;">
+                <label class="form-label">Nro. / Comprobante de transferencia</label>
+                <input class="form-control" name="comprobante" id="comprobante" placeholder="Ej: 00123456 o descripción">
+            </div>
+
+            <script>
+            function toggleComprobante() {
+                const medio = document.getElementById('medio_pago').value;
+                const campo = document.getElementById('campo_comprobante');
+                campo.style.display = (medio === 'transferencia') ? 'flex' : 'none';
+            }
+            </script>
             <div class="col-md-6">
                 <label class="form-label">Monto pagado</label>
                 <div class="input-group">

@@ -61,6 +61,7 @@ class Pago(db.Model):
     medio_pago = db.Column(db.String(50), nullable=False)
     monto = db.Column(db.Float, nullable=False)
     fecha = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    comprobante = db.Column(db.String(100)) 
 
 
 class TurnoSesion(db.Model):

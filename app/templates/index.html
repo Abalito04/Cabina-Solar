@@ -58,18 +58,32 @@
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
-                    {% for turno in turnos_hoy %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
-                        <div>
-                            <span class="fw-bold">{{ turno.fecha_hora_turno.strftime('%H:%M') }}</span>
-                            <span class="ms-2">{{ turno.cliente.nombre_completo }}</span>
-                            {% if turno.observacion %}
-                                <span class="text-muted small ms-2">— {{ turno.observacion }}</span>
-                            {% endif %}
+                                        {% for turno in turnos_hoy %}
+                    <li class="list-group-item px-3 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">{{ turno.fecha_hora_turno.strftime('%H:%M') }}</span>
+                                <span class="ms-2">{{ turno.cliente.nombre_completo }}</span>
+                                {% if turno.observacion %}
+                                    <span class="text-muted small ms-2">— {{ turno.observacion }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge {% if turno.estado == 'realizado' %}text-bg-success{% elif turno.estado == 'cancelado' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+                                    {{ turno.estado }}
+                                </span>
+                                <!-- Botones rápidos solo si el turno está pendiente -->
+                                {% if turno.estado == 'pendiente' %}
+                                <form action="{{ url_for('turnos.realizar_rapido', turno_id=turno.id) }}" method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-success" type="submit" title="Marcar como realizado">✔</button>
+                                </form>
+                                <form action="{{ url_for('turnos.cancelar_rapido', turno_id=turno.id) }}" method="post" class="d-inline"
+                                      onsubmit="return confirm('¿Cancelar el turno de {{ turno.cliente.nombre_completo }}?')">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="Cancelar turno">✖</button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </div>
-                        <span class="badge {% if turno.estado == 'realizado' %}text-bg-success{% elif turno.estado == 'cancelado' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
-                            {{ turno.estado }}
-                        </span>
                     </li>
                     {% else %}
                     <li class="list-group-item text-center text-muted py-4">No hay turnos programados para hoy.</li>
