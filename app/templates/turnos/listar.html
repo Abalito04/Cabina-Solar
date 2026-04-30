@@ -27,12 +27,24 @@
                         </span>
                     </td>
                     <td>{{ turno.observacion }}</td>
-                        <td class="text-end">
+                    <td class="text-end">
                         {% if turno.estado == 'pendiente' %}
                         <form action="{{ url_for('turnos.marcar_realizado', turno_id=turno.id) }}" method="post" class="d-inline" onsubmit="return confirm('¿Confirmar que la sesión se realizó?')">
                             <button class="btn btn-sm btn-success" type="submit">Realizado</button>
                         </form>
                         {% endif %}
+
+                        <!-- Botón Google Calendar -->
+                        {% if turno.estado != 'cancelado' %}
+                        <a class="btn btn-sm btn-outline-danger"
+                           href="{{ google_calendar_url(turno) }}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           title="Agregar a Google Calendar">
+                            📅 Calendario
+                        </a>
+                        {% endif %}
+
                         <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('turnos.editar', turno_id=turno.id) }}">Editar</a>
                     </td>
                 </tr>

@@ -2,8 +2,54 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Ventas</h1>
-    <a class="btn btn-primary" href="{{ url_for('ventas.nueva') }}">Nueva venta</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-success" href="{{ url_for('ventas.exportar_excel') }}">⬇️ Exportar a Excel</a>
+        <a class="btn btn-primary" href="{{ url_for('ventas.nueva') }}">Nueva venta</a>
+    </div>
 </div>
+
+<!-- Filtros -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small">Cliente</label>
+                <select name="cliente_id" class="form-select form-select-sm">
+                    <option value="">Todos los clientes</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {% if cliente_id == c.id %}selected{% endif %}>
+                        {{ c.nombre_completo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Medio de pago</label>
+                <select name="medio_pago" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="efectivo" {% if medio_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
+                    <option value="transferencia" {% if medio_pago == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                    <option value="tarjeta" {% if medio_pago == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
+                    <option value="mercado_pago" {% if medio_pago == 'mercado_pago' %}selected{% endif %}>Mercado Pago</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Desde</label>
+                <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-primary btn-sm w-100" type="submit">Filtrar</button>
+                <a class="btn btn-outline-secondary btn-sm w-100" href="{{ url_for('ventas.listar') }}">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -14,27 +60,40 @@
                     <th>Producto</th>
                     <th>Sesiones</th>
                     <th>Total</th>
-                    <th>Pago</th>
+                    <th>Pagos</th>
                 </tr>
             </thead>
             <tbody>
                 {% for venta in ventas %}
                 <tr>
                     <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td>{{ venta.cliente.nombre_completo }}</td>
+                    <td>
+                        <a href="{{ url_for('clientes.detalle', cliente_id=venta.cliente.id) }}" class="text-decoration-none">
+                            {{ venta.cliente.nombre_completo }}
+                        </a>
+                    </td>
                     <td>{{ venta.producto.nombre }}</td>
                     <td>{{ venta.sesiones_compradas }}</td>
                     <td>${{ '%.2f'|format(venta.total) }}</td>
                     <td>
                         {% for pago in venta.pagos %}
-                            <div>{{ pago.medio_pago }} - ${{ '%.2f'|format(pago.monto) }}</div>
+                            <div class="small">{{ pago.medio_pago|capitalize }} — ${{ '%.2f'|format(pago.monto) }} <span class="text-muted">({{ pago.fecha.strftime('%d/%m %H:%M') }})</span></div>
                         {% endfor %}
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="text-center py-4">No hay ventas registradas.</td></tr>
+                <tr><td colspan="6" class="text-center py-4">No hay ventas que coincidan con los filtros.</td></tr>
                 {% endfor %}
             </tbody>
+            {% if ventas %}
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td colspan="4" class="text-end">Total del período:</td>
+                    <td>${{ '%.2f'|format(total_filtrado) }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+            {% endif %}
         </table>
     </div>
 </div>

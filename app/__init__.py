@@ -25,4 +25,22 @@ def create_app():
         from . import models
         db.create_all()
 
+    # ── Helpers de Jinja ─────────────────────────────────────────────────
+    @app.template_global()          # ← SIN línea en blanco antes del def
+    def google_calendar_url(turno):
+        """Genera el link para agregar el turno directamente a Google Calendar."""
+        from urllib.parse import urlencode
+        from datetime import timedelta
+
+        inicio = turno.fecha_hora_turno.strftime('%Y%m%dT%H%M%S')
+        fin = (turno.fecha_hora_turno + timedelta(minutes=30)).strftime('%Y%m%dT%H%M%S')
+
+        params = {
+            'action': 'TEMPLATE',
+            'text': f'Turno Cabina Solar — {turno.cliente.nombre_completo}',
+            'dates': f'{inicio}/{fin}',
+            'details': turno.observacion or 'Sesión de cabina solar.',
+        }
+        return f'https://calendar.google.com/calendar/render?{urlencode(params)}'
+
     return app
