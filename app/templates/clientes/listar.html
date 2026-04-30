@@ -4,14 +4,16 @@
     <h1 class="h3 mb-0">Clientes</h1>
     <a class="btn btn-primary" href="{{ url_for('clientes.nuevo') }}">+ Nuevo</a>
 </div>
-<div class="card shadow-sm">
+
+<!-- Vista desktop: tabla -->
+<div class="card shadow-sm d-none d-md-block">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 cs-table">
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th class="d-none d-md-table-cell">DNI</th>
-                    <th class="d-none d-md-table-cell">Teléfono</th>
+                    <th>DNI</th>
+                    <th>Teléfono</th>
                     <th>Sesiones</th>
                     <th>Saldo</th>
                     <th class="text-end">Acciones</th>
@@ -20,31 +22,27 @@
             <tbody>
                 {% for cliente in clientes %}
                 <tr>
-                    <td>
-                        <div class="fw-semibold">{{ cliente.nombre_completo }}</div>
-                        <!-- En móvil mostramos DNI y tel debajo del nombre -->
-                        <div class="d-md-none small" style="color:var(--cs-text-muted)">
-                            DNI: {{ cliente.dni }}
-                            {% if cliente.telefono %} · {{ cliente.telefono }}{% endif %}
-                        </div>
-                    </td>
-                    <td class="d-none d-md-table-cell">{{ cliente.dni }}</td>
-                    <td class="d-none d-md-table-cell">{{ cliente.telefono or '—' }}</td>
-                    <td>
-                        <span class="badge text-bg-primary">{{ cliente.saldo_sesiones }}</span>
-                    </td>
+                    <td class="fw-semibold">{{ cliente.nombre_completo }}</td>
+                    <td>{{ cliente.dni }}</td>
+                    <td>{{ cliente.telefono or '—' }}</td>
+                    <td><span class="badge text-bg-primary">{{ cliente.saldo_sesiones }}</span></td>
                     <td>
                         {% if cliente.saldo_pesos < 0 %}
-                            <span class="fw-bold" style="color:var(--cs-danger)">-${{ '%.2f'|format(cliente.saldo_pesos|abs) }}</span>
+                            <span class="fw-bold" style="color:var(--cs-danger)">
+                                -${{ '%.2f'|format(cliente.saldo_pesos|abs) }}
+                            </span>
                         {% else %}
                             <span style="color:var(--cs-success)">$0.00</span>
                         {% endif %}
                     </td>
                     <td class="text-end">
                         <div class="cs-action-group">
-                            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('clientes.detalle', cliente_id=cliente.id) }}">Ver</a>
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}">Editar</a>
-                            <form action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}" method="post" class="d-inline"
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="{{ url_for('clientes.detalle', cliente_id=cliente.id) }}">Ver</a>
+                            <a class="btn btn-sm btn-outline-secondary"
+                               href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}">Editar</a>
+                            <form action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}"
+                                  method="post" class="d-inline"
                                   onsubmit="return confirm('¿Eliminar cliente?')">
                                 <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
                             </form>
@@ -52,10 +50,62 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="text-center py-4" style="color:var(--cs-text-faint)">No hay clientes cargados.</td></tr>
+                <tr>
+                    <td colspan="6" class="text-center py-4" style="color:var(--cs-text-faint)">
+                        No hay clientes cargados.
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- Vista móvil: tarjetas -->
+<div class="d-md-none">
+    {% for cliente in clientes %}
+    <div class="card shadow-sm mb-2">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="fw-semibold">{{ cliente.nombre_completo }}</div>
+                    <div class="small" style="color:var(--cs-text-muted)">
+                        DNI: {{ cliente.dni }}
+                        {% if cliente.telefono %} · {{ cliente.telefono }}{% endif %}
+                    </div>
+                </div>
+                <div class="text-end ms-2">
+                    <span class="badge text-bg-primary">{{ cliente.saldo_sesiones }} ses.</span>
+                    <div class="small mt-1">
+                        {% if cliente.saldo_pesos < 0 %}
+                            <span class="fw-bold" style="color:var(--cs-danger)">
+                                -${{ '%.2f'|format(cliente.saldo_pesos|abs) }}
+                            </span>
+                        {% else %}
+                            <span style="color:var(--cs-success)">$0.00</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+                <a class="btn btn-sm btn-outline-primary w-100"
+                   href="{{ url_for('clientes.detalle', cliente_id=cliente.id) }}">Ver</a>
+                <a class="btn btn-sm btn-outline-secondary w-100"
+                   href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}">Editar</a>
+                <form action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}"
+                      method="post" class="d-inline"
+                      onsubmit="return confirm('¿Eliminar cliente?')">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-4" style="color:var(--cs-text-faint)">
+            No hay clientes cargados.
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
