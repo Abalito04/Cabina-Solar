@@ -308,3 +308,43 @@ h1, h2, h3, h4, h5 {
     font-size: 1.5rem !important;
     padding: 0.4em 0.9em !important;
 }
+
+/* ─── Tablas responsive ─────────────────────── */
+.cs-table td, .cs-table th {
+    padding: 0.75rem 1rem !important;
+    vertical-align: middle !important;
+}
+
+/* Grupo de botones de acción — se apilan en móvil */
+.cs-action-group {
+    display: flex;
+    gap: 0.35rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* En móvil: botones más grandes para el dedo */
+@media (max-width: 767px) {
+    .cs-table td, .cs-table th {
+        padding: 0.65rem 0.75rem !important;
+    }
+
+    .cs-action-group .btn {
+        min-width: 44px;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem !important;
+    }
+
+    /* KPI value más chico en pantallas muy pequeñas */
+    .kpi-value {
+        font-size: 1.5rem !important;
+    }
+
+    /* Inputs táctiles con altura mínima cómoda */
+    .form-control, .form-select {
+        min-height: 44px !important;
+    }
+}
