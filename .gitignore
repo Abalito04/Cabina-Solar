@@ -24,3 +24,7 @@ __pycache__/
 # Scripts con datos sensibles
 seed.py
 change_password.py
+reset_db.py
+
+#env
+*.env
