@@ -133,8 +133,8 @@
 let intervalo = null;
 let timestampFin = null;
 let alarmaDisparada = false;
+let intervaloAlarma = null;  // ← nuevo
 
-// Pedir permiso de notificaciones al abrir el temporizador
 function pedirPermiso() {
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -179,13 +179,14 @@ function tick() {
         document.getElementById('cuentaRegresiva').style.display = 'none';
         document.getElementById('mensajeTerminado').style.display = '';
         document.getElementById('btnDetener').style.display = 'none';
-        sonarAlarma();
         enviarNotificacion();
-        // Abrir el modal si estaba cerrado
         const modal = document.getElementById('modalTemporizador');
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
         }
+        // Sonar cada 2 segundos hasta que cierren
+        beep();
+        intervaloAlarma = setInterval(beep, 2000);
         return;
     }
     if (restante > 0) {
@@ -198,11 +199,12 @@ function tick() {
 
 function detenerTemporizador() {
     if (intervalo) { clearInterval(intervalo); intervalo = null; }
+    if (intervaloAlarma) { clearInterval(intervaloAlarma); intervaloAlarma = null; }
     timestampFin = null;
     alarmaDisparada = false;
 }
 
-function sonarAlarma() {
+function beep() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         [0, 0.4, 0.8].forEach(delay => {
@@ -229,7 +231,6 @@ function enviarNotificacion() {
     }
 }
 
-// Al volver de pantalla bloqueada, chequear si terminó
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && timestampFin && !alarmaDisparada) {
         tick();
