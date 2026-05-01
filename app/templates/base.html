@@ -132,9 +132,19 @@
 <script>
 let intervalo = null;
 let timestampFin = null;
+let alarmaDisparada = false;
+
+// Pedir permiso de notificaciones al abrir el temporizador
+function pedirPermiso() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
 
 function abrirTemporizador(nombreCliente) {
+    pedirPermiso();
     detenerTemporizador();
+    alarmaDisparada = false;
     document.getElementById('timerCliente').textContent = '👤 ' + nombreCliente;
     document.getElementById('selectorDuracion').style.display = '';
     document.getElementById('cuentaRegresiva').style.display = 'none';
@@ -148,6 +158,7 @@ function abrirTemporizador(nombreCliente) {
 function iniciarTemporizador() {
     const minutos = parseInt(document.getElementById('duracionSelect').value);
     timestampFin = Date.now() + minutos * 60 * 1000;
+    alarmaDisparada = false;
     document.getElementById('selectorDuracion').style.display = 'none';
     document.getElementById('cuentaRegresiva').style.display = '';
     document.getElementById('mensajeTerminado').style.display = 'none';
@@ -158,8 +169,10 @@ function iniciarTemporizador() {
 }
 
 function tick() {
+    if (!timestampFin) return;
     const restante = timestampFin - Date.now();
-    if (restante <= 0) {
+    if (restante <= 0 && !alarmaDisparada) {
+        alarmaDisparada = true;
         clearInterval(intervalo);
         intervalo = null;
         document.getElementById('cuentaRegresiva').textContent = '00:00';
@@ -167,34 +180,64 @@ function tick() {
         document.getElementById('mensajeTerminado').style.display = '';
         document.getElementById('btnDetener').style.display = 'none';
         sonarAlarma();
+        enviarNotificacion();
+        // Abrir el modal si estaba cerrado
+        const modal = document.getElementById('modalTemporizador');
+        if (!modal.classList.contains('show')) {
+            new bootstrap.Modal(modal).show();
+        }
         return;
     }
-    const totalSeg = Math.ceil(restante / 1000);
-    const m = Math.floor(totalSeg / 60).toString().padStart(2, '0');
-    const s = (totalSeg % 60).toString().padStart(2, '0');
-    document.getElementById('cuentaRegresiva').textContent = m + ':' + s;
+    if (restante > 0) {
+        const totalSeg = Math.ceil(restante / 1000);
+        const m = Math.floor(totalSeg / 60).toString().padStart(2, '0');
+        const s = (totalSeg % 60).toString().padStart(2, '0');
+        document.getElementById('cuentaRegresiva').textContent = m + ':' + s;
+    }
 }
 
 function detenerTemporizador() {
     if (intervalo) { clearInterval(intervalo); intervalo = null; }
     timestampFin = null;
+    alarmaDisparada = false;
 }
 
 function sonarAlarma() {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.4, 0.8].forEach(delay => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.6, ctx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
-        osc.start(ctx.currentTime + delay);
-        osc.stop(ctx.currentTime + delay + 0.5);
-    });
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.4, 0.8].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.6, ctx.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
+            osc.start(ctx.currentTime + delay);
+            osc.stop(ctx.currentTime + delay + 0.5);
+        });
+    } catch(e) {}
 }
+
+function enviarNotificacion() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('⏱ Cabina Solar', {
+            body: '¡La sesión ha terminado!',
+            icon: '/static/icons/icon-192.png'
+        });
+    }
+}
+
+// Al volver de pantalla bloqueada, chequear si terminó
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && timestampFin && !alarmaDisparada) {
+        tick();
+        if (!intervalo && timestampFin && !alarmaDisparada) {
+            intervalo = setInterval(tick, 500);
+        }
+    }
+});
 </script>
 </body>
 </html>
