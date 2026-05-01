@@ -161,7 +161,7 @@
 
 <script>
 let intervalo = null;
-let segundosRestantes = 0;
+let timestampFin = null;
 
 function abrirTemporizador(nombreCliente) {
     detenerTemporizador();
@@ -177,7 +177,7 @@ function abrirTemporizador(nombreCliente) {
 
 function iniciarTemporizador() {
     const minutos = parseInt(document.getElementById('duracionSelect').value);
-    segundosRestantes = minutos * 60;
+    timestampFin = Date.now() + minutos * 60 * 1000;
 
     document.getElementById('selectorDuracion').style.display = 'none';
     document.getElementById('cuentaRegresiva').style.display = '';
@@ -186,28 +186,32 @@ function iniciarTemporizador() {
     document.getElementById('btnDetener').style.display = '';
 
     actualizarDisplay();
-    intervalo = setInterval(() => {
-        segundosRestantes--;
-        actualizarDisplay();
-        if (segundosRestantes <= 0) {
-            clearInterval(intervalo);
-            intervalo = null;
-            document.getElementById('cuentaRegresiva').style.display = 'none';
-            document.getElementById('mensajeTerminado').style.display = '';
-            document.getElementById('btnDetener').style.display = 'none';
-            sonarAlarma();
-        }
-    }, 1000);
+    intervalo = setInterval(tick, 500);
 }
+
+function tick() {
+    const restante = timestampFin - Date.now();
+    if (restante <= 0) {
+        clearInterval(intervalo);
+        intervalo = null;
+        document.getElementById('cuentaRegresiva').textContent = '00:00';
+        document.getElementById('cuentaRegresiva').style.display = 'none';
+        document.getElementById('mensajeTerminado').style.display = '';
+        document.getElementById('btnDetener').style.display = 'none';
+        sonarAlarma();
+        return;
+    }
+    const totalSeg = Math.ceil(restante / 1000);
+    const m = Math.floor(totalSeg / 60).toString().padStart(2, '0');
+    const s = (totalSeg % 60).toString().padStart(2, '0');
+    document.getElementById('cuentaRegresiva').textContent = m + ':' + s;
+}
+
+function actualizarDisplay() { tick(); }
 
 function detenerTemporizador() {
     if (intervalo) { clearInterval(intervalo); intervalo = null; }
-}
-
-function actualizarDisplay() {
-    const m = Math.floor(segundosRestantes / 60).toString().padStart(2, '0');
-    const s = (segundosRestantes % 60).toString().padStart(2, '0');
-    document.getElementById('cuentaRegresiva').textContent = m + ':' + s;
+    timestampFin = null;
 }
 
 function sonarAlarma() {
