@@ -38,14 +38,14 @@
             <span>Cabina Solar</span>
         </a>
 
-        <!-- Botón hamburguesa (Bootstrap lo maneja solo) -->
+        <!-- Botón hamburguesa -->
         <button class="navbar-toggler cs-toggler" type="button"
                 data-bs-toggle="collapse" data-bs-target="#navMain"
                 aria-controls="navMain" aria-expanded="false" aria-label="Menú">
             <span class="cs-hamburger">☰</span>
         </button>
 
-        <!-- Links — colapsa en móvil, se despliega en desktop -->
+        <!-- Links -->
         <div class="collapse navbar-collapse" id="navMain">
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 py-2 py-lg-0">
                 <li class="nav-item">
@@ -87,6 +87,114 @@
     {% block content %}{% endblock %}
 </div>
 
+<!-- Modal temporizador global -->
+<div class="modal fade" id="modalTemporizador" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">⏱ Temporizador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="detenerTemporizador()"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="timerCliente" class="fw-semibold mb-3" style="font-size:1.1rem"></div>
+
+                <div id="selectorDuracion" class="mb-3">
+                    <label class="form-label">Duración de la sesión</label>
+                    <select id="duracionSelect" class="form-select w-auto mx-auto">
+                        <option value="5">5 minutos</option>
+                        <option value="10">10 minutos</option>
+                        <option value="15" selected>15 minutos</option>
+                        <option value="20">20 minutos</option>
+                        <option value="30">30 minutos</option>
+                        <option value="45">45 minutos</option>
+                        <option value="60">60 minutos</option>
+                    </select>
+                </div>
+
+                <div id="cuentaRegresiva" style="font-size:4rem; font-weight:800; letter-spacing:2px; display:none">
+                    00:00
+                </div>
+
+                <div id="mensajeTerminado" class="text-success fw-bold mt-2" style="display:none; font-size:1.2rem">
+                    ✅ ¡Sesión terminada!
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button id="btnIniciar" class="btn btn-primary px-4" onclick="iniciarTemporizador()">Iniciar</button>
+                <button id="btnDetener" class="btn btn-danger px-4" data-bs-dismiss="modal" onclick="detenerTemporizador()" style="display:none">Detener</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="detenerTemporizador()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let intervalo = null;
+let timestampFin = null;
+
+function abrirTemporizador(nombreCliente) {
+    detenerTemporizador();
+    document.getElementById('timerCliente').textContent = '👤 ' + nombreCliente;
+    document.getElementById('selectorDuracion').style.display = '';
+    document.getElementById('cuentaRegresiva').style.display = 'none';
+    document.getElementById('cuentaRegresiva').textContent = '00:00';
+    document.getElementById('mensajeTerminado').style.display = 'none';
+    document.getElementById('btnIniciar').style.display = '';
+    document.getElementById('btnDetener').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('modalTemporizador')).show();
+}
+
+function iniciarTemporizador() {
+    const minutos = parseInt(document.getElementById('duracionSelect').value);
+    timestampFin = Date.now() + minutos * 60 * 1000;
+    document.getElementById('selectorDuracion').style.display = 'none';
+    document.getElementById('cuentaRegresiva').style.display = '';
+    document.getElementById('mensajeTerminado').style.display = 'none';
+    document.getElementById('btnIniciar').style.display = 'none';
+    document.getElementById('btnDetener').style.display = '';
+    tick();
+    intervalo = setInterval(tick, 500);
+}
+
+function tick() {
+    const restante = timestampFin - Date.now();
+    if (restante <= 0) {
+        clearInterval(intervalo);
+        intervalo = null;
+        document.getElementById('cuentaRegresiva').textContent = '00:00';
+        document.getElementById('cuentaRegresiva').style.display = 'none';
+        document.getElementById('mensajeTerminado').style.display = '';
+        document.getElementById('btnDetener').style.display = 'none';
+        sonarAlarma();
+        return;
+    }
+    const totalSeg = Math.ceil(restante / 1000);
+    const m = Math.floor(totalSeg / 60).toString().padStart(2, '0');
+    const s = (totalSeg % 60).toString().padStart(2, '0');
+    document.getElementById('cuentaRegresiva').textContent = m + ':' + s;
+}
+
+function detenerTemporizador() {
+    if (intervalo) { clearInterval(intervalo); intervalo = null; }
+    timestampFin = null;
+}
+
+function sonarAlarma() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.4, 0.8].forEach(delay => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.5);
+    });
+}
+</script>
 </body>
 </html>
