@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from .extensions import db, login_manager, migrate
 from .routes.main import main_bp
@@ -9,9 +10,9 @@ from .routes.turnos import turnos_bp
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cabina_solar.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///cabina_solar.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = 'cambiar-por-una-clave-segura'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cambiar-por-una-clave-segura')
 
     db.init_app(app)
     login_manager.init_app(app)
