@@ -1,56 +1,85 @@
-# Cabina Solar - Sistema de Gestión
+# Cabina Solar — Sistema de Gestión
 
-Sistema web desarrollado en Flask para administrar clientes, venta de paquetes de sesiones, turnos y control de pagos y deudas en un centro de bronceado / cabina solar.
+Sistema web multi-tenant desarrollado en Flask para administrar clientes, venta de paquetes de sesiones, turnos y control de pagos en un centro de bronceado / cabina solar.
 
-## 🚀 Funcionalidades Principales
+🌐 **Producción**: [cabina-solar-production.up.railway.app](https://cabina-solar-production.up.railway.app)
 
-* **Gestión de Clientes**: Alta, edición y detalle completo.
-* **Control de Sesiones**: Cálculo automático de "Sesiones Restantes". El sistema no permite agendar turnos realizados si el cliente no tiene saldo.
-* **Catálogo de Productos**: Paquetes de sesiones configurables con nombre, descripción, cantidad de sesiones y precio.
-* **Historial y Detalle Individual ("Radiografía" del cliente)**:
-  * Historial de paquetes comprados.
-  * Registro de asistencia y turnos con fecha y hora.
-  * Control de pagos realizados y medio de pago usado (efectivo, transferencia, tarjeta).
-* **Gestión de Deudas (Saldos a favor/en contra)**:
-  * Si un cliente paga menos que el valor total del paquete, el sistema calcula la deuda.
-  * Botón rápido para ir cobrando saldos pendientes de a poco.
-* **Control de Turnos**: Cambio rápido de estado (Pendiente -> Realizado) que descuenta automáticamente la sesión del saldo del cliente, o devuelve la sesión si el turno se cancela.
+## 🚀 Funcionalidades
+
+- **Multi-tenant**: Cada empresa tiene su propio espacio de datos aislado con login individual
+- **Gestión de Clientes**: Alta, edición y detalle completo por empresa
+- **Control de Sesiones**: Cálculo automático de sesiones restantes; no permite turnos si el cliente no tiene saldo
+- **Catálogo de Productos**: Paquetes de sesiones configurables con nombre, descripción, cantidad y precio
+- **Gestión de Ventas y Pagos**: Registro de ventas, medios de pago (efectivo, transferencia, tarjeta) y control de deudas
+- **Control de Turnos**: Cambio rápido de estado (Pendiente → Realizado / Cancelado) con descuento/devolución automática de sesiones
+- **Dashboard**: Resumen del día con turnos, ingresos, clientes con deuda y últimos registros
+- **Exportación a Excel**: Reporte completo con hojas de clientes, ventas, pagos, turnos y medios de pago
+- **PWA**: Instalable en celular como app nativa desde Chrome
 
 ## 🛠️ Tecnologías
 
-* **Backend**: Python 3.8+ con Flask
-* **Base de Datos**: SQLite + Flask-SQLAlchemy (ORM)
-* **Frontend**: HTML5, Jinja2, Bootstrap 5
+- **Backend**: Python 3.13 + Flask
+- **Base de datos**: PostgreSQL (producción) / SQLite (desarrollo local)
+- **ORM**: Flask-SQLAlchemy + Flask-Migrate (Alembic)
+- **Autenticación**: Flask-Login
+- **Frontend**: HTML5, Jinja2, Bootstrap 5
+- **Servidor**: Gunicorn
+- **Hosting**: Railway
 
-## ⚙️ Instalación y Uso local
+## ⚙️ Instalación local
 
 1. **Clonar el repositorio**:
    ```bash
-   git clone https://github.com/tu-usuario/cabina-solar.git
-   cd cabina-solar
+   git clone https://github.com/Abalito04/Cabina-Solar.git
+   cd Cabina-Solar
    ```
 
-2. **Crear y activar un entorno virtual**:
-   * En Windows (Git Bash): `source venv/Scripts/activate`
-   * En Windows (CMD/PowerShell): `venv\Scripts\activate`
-   * En Mac/Linux: `source venv/bin/activate`
+2. **Crear y activar entorno virtual**:
+   ```bash
+   # Windows (Git Bash)
+   source venv/Scripts/activate
+   # Mac/Linux
+   source venv/bin/activate
+   ```
 
 3. **Instalar dependencias**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Ejecutar la aplicación**:
+4. **Aplicar migraciones**:
+   ```bash
+   flask db upgrade
+   ```
+
+5. **Crear empresa y usuario inicial** (requiere `seed.py` con datos propios):
+   ```bash
+   python seed.py
+   ```
+
+6. **Ejecutar**:
    ```bash
    python run.py
    ```
+   Accedé en: `http://127.0.0.1:5000`
 
-5. **Acceder**:
-   Abrí tu navegador web e ingresá a: `http://127.0.0.1:5000/`
+## 🔐 Variables de entorno
 
-*Nota: La base de datos `cabina_solar.db` se generará automáticamente la primera vez que se ejecute la aplicación. El archivo `.gitignore` previene que la base local se suba al repositorio.*
+Creá un archivo `.env` en la raíz con:
 
-## 📱 Próximos pasos previstos
-- Construcción de rutas API JSON para consumo desde una futura App Android.
-- Módulo de reportes diarios/mensuales de caja.
-- Login y roles de usuario.
+```
+DATABASE_URL=postgresql://... (o dejarlo vacío para usar SQLite local)
+SECRET_KEY=tu-clave-secreta
+```
+
+## 📦 Deploy en Railway
+
+El proyecto está configurado para desplegarse automáticamente desde GitHub. Railway ejecuta:
+```
+flask db upgrade && gunicorn "app:create_app()"
+```
+
+## 📱 Próximos pasos
+- Panel de administración para gestionar empresas y usuarios
+- Roles de usuario (admin / empleado)
+- Notificaciones y recordatorios de turnos por email o WhatsApp
