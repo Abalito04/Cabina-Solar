@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from ..models import Cliente, Producto, Venta, TurnoSesion, Pago
@@ -10,11 +11,13 @@ DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 MESES = ['enero','febrero','marzo','abril','mayo','junio',
          'julio','agosto','septiembre','octubre','noviembre','diciembre']
 
+TZ_AR = ZoneInfo('America/Argentina/Buenos_Aires')
+
 
 @main_bp.route('/')
 @login_required
 def index():
-    hoy = date.today()
+    hoy = datetime.now(TZ_AR).date()
     fecha_texto = f"{DIAS[hoy.weekday()]} {hoy.day} de {MESES[hoy.month - 1]} de {hoy.year}"
     eid = current_user.empresa_id
 
