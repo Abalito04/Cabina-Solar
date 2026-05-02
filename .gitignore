@@ -28,3 +28,6 @@ reset_db.py
 
 #env
 *.env
+
+#pdf
+propuesta_cabina_solar.pdf
