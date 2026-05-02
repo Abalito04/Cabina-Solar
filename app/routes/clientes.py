@@ -1,9 +1,21 @@
+import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from ..extensions import db
 from ..models import Cliente
 
+
 clientes_bp = Blueprint('clientes', __name__)
+
+
+def validar_cliente(nombre, apellido, dni, correo):
+    if not nombre or not apellido:
+        return 'Nombre y apellido son obligatorios.'
+    if not dni.isdigit() or not (7 <= len(dni) <= 9):
+        return 'El DNI debe tener entre 7 y 9 dígitos numéricos.'
+    if correo and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w{2,}$', correo):
+        return 'El correo ingresado no es válido.'
+    return None
 
 
 @clientes_bp.route('/')
@@ -18,18 +30,28 @@ def listar():
 @login_required
 def nuevo():
     if request.method == 'POST':
-        dni = request.form['dni'].strip()
+        nombre  = request.form['nombre'].strip()
+        apellido = request.form['apellido'].strip()
+        dni     = request.form['dni'].strip()
+        correo  = request.form.get('correo', '').strip()
+        telefono = request.form.get('telefono', '').strip()
+
+        error = validar_cliente(nombre, apellido, dni, correo)
+        if error:
+            flash(error, 'danger')
+            return redirect(url_for('clientes.nuevo'))
+
         existente = Cliente.query.filter_by(dni=dni, empresa_id=current_user.empresa_id).first()
         if existente:
             flash('Ya existe un cliente con ese DNI.', 'danger')
             return redirect(url_for('clientes.nuevo'))
 
         cliente = Cliente(
-            nombre=request.form['nombre'].strip(),
-            apellido=request.form['apellido'].strip(),
+            nombre=nombre,
+            apellido=apellido,
             dni=dni,
-            correo=request.form.get('correo', '').strip(),
-            telefono=request.form.get('telefono', '').strip(),
+            correo=correo,
+            telefono=telefono,
             empresa_id=current_user.empresa_id,
         )
         db.session.add(cliente)
@@ -44,7 +66,17 @@ def nuevo():
 def editar(cliente_id):
     cliente = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
     if request.method == 'POST':
-        dni = request.form['dni'].strip()
+        nombre   = request.form['nombre'].strip()
+        apellido = request.form['apellido'].strip()
+        dni      = request.form['dni'].strip()
+        correo   = request.form.get('correo', '').strip()
+        telefono = request.form.get('telefono', '').strip()
+
+        error = validar_cliente(nombre, apellido, dni, correo)
+        if error:
+            flash(error, 'danger')
+            return redirect(url_for('clientes.editar', cliente_id=cliente.id))
+
         existente = Cliente.query.filter(
             Cliente.dni == dni,
             Cliente.id != cliente.id,
@@ -54,11 +86,11 @@ def editar(cliente_id):
             flash('Ya existe otro cliente con ese DNI.', 'danger')
             return redirect(url_for('clientes.editar', cliente_id=cliente.id))
 
-        cliente.nombre = request.form['nombre'].strip()
-        cliente.apellido = request.form['apellido'].strip()
-        cliente.dni = dni
-        cliente.correo = request.form.get('correo', '').strip()
-        cliente.telefono = request.form.get('telefono', '').strip()
+        cliente.nombre   = nombre
+        cliente.apellido = apellido
+        cliente.dni      = dni
+        cliente.correo   = correo
+        cliente.telefono = telefono
         db.session.commit()
         flash('Cliente actualizado.', 'success')
         return redirect(url_for('clientes.listar'))
