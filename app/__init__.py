@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+import logging
+from flask import Flask, render_template
 from datetime import timedelta
 from .extensions import db, login_manager, migrate, limiter, csrf
 from .routes.main import main_bp
@@ -7,6 +8,8 @@ from .routes.clientes import clientes_bp
 from .routes.productos import productos_bp
 from .routes.ventas import ventas_bp
 from .routes.turnos import turnos_bp
+
+logger = logging.getLogger(__name__)
 
 
 def create_app():
@@ -73,5 +76,18 @@ def create_app():
         public = ['auth.login', 'static']
         if not current_user.is_authenticated and request.endpoint not in public:
             return redirect(url_for('auth.login'))
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html'), 403
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        logger.error(f'Error 500: {e}')
+        return render_template('errors/500.html'), 500
 
     return app
