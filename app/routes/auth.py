@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from flask_login import login_user, logout_user, login_required
 from ..models import User
 from ..extensions import limiter  # agregás esta importación
@@ -15,6 +15,7 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password):
+            session.permanent = True
             login_user(user)
             return redirect(url_for('main.index'))
 

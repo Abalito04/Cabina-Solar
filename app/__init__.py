@@ -1,5 +1,6 @@
 import os
 from flask import Flask
+from datetime import timedelta
 from .extensions import db, login_manager, migrate
 from .routes.main import main_bp
 from .routes.clientes import clientes_bp
@@ -16,6 +17,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     if not app.config['SECRET_KEY']:
         raise RuntimeError("SECRET_KEY no está definida en las variables de entorno")
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
     app.config['SESSION_COOKIE_SECURE'] = True    # solo HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # no accesible desde JS
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # protección básica CSRF
