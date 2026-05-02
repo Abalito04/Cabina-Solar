@@ -1,34 +1,39 @@
 import os
 from flask import Flask
 from datetime import timedelta
-from .extensions import db, login_manager, migrate
+from .extensions import db, login_manager, migrate, limiter, csrf
 from .routes.main import main_bp
 from .routes.clientes import clientes_bp
 from .routes.productos import productos_bp
 from .routes.ventas import ventas_bp
 from .routes.turnos import turnos_bp
-from .extensions import db, login_manager, migrate, limiter, csrf  # agregás limiter
 
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///cabina_solar.db')
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    if not app.config['SQLALCHEMY_DATABASE_URI']:
+        raise RuntimeError("DATABASE_URL no está definida en las variables de entorno")
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     if not app.config['SECRET_KEY']:
         raise RuntimeError("SECRET_KEY no está definida en las variables de entorno")
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
-    app.config['SESSION_COOKIE_SECURE'] = True    # solo HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True  # no accesible desde JS
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # protección básica CSRF
-    app.config['WTF_CSRF_ENABLED'] = True
-    csrf.init_app(app)
 
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
+    app.config['SESSION_COOKIE_SECURE']      = True
+    app.config['SESSION_COOKIE_HTTPONLY']    = True
+    app.config['SESSION_COOKIE_SAMESITE']    = 'Lax'
+    app.config['WTF_CSRF_ENABLED']           = True
+
+    csrf.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     limiter.init_app(app)
-    # User loader — Flask-Login lo usa para reconstruir el usuario desde la sesión
+
     @login_manager.user_loader
     def load_user(user_id):
         from .models import User
@@ -44,7 +49,6 @@ def create_app():
 
     with app.app_context():
         from . import models
-        #db.create_all()
 
     @app.template_global()
     def google_calendar_url(turno):
@@ -61,8 +65,7 @@ def create_app():
             'details': turno.observacion or 'Sesión de cabina solar.',
         }
         return f'https://calendar.google.com/calendar/render?{urlencode(params)}'
-    
-    # Al final de create_app(), antes del return:
+
     @app.before_request
     def require_login():
         from flask_login import current_user
