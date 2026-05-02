@@ -7,14 +7,17 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from ..extensions import db
 from ..models import Cliente, Producto, Venta, Pago, TurnoSesion
 
+
 ventas_bp = Blueprint('ventas', __name__)
+
+MEDIOS_PAGO_VALIDOS = {'efectivo', 'transferencia', 'tarjeta'}
 
 
 @ventas_bp.route('/')
 @login_required
 def listar():
-    cliente_id = request.args.get('cliente_id', type=int)
-    medio_pago = request.args.get('medio_pago', '')
+    cliente_id  = request.args.get('cliente_id', type=int)
+    medio_pago  = request.args.get('medio_pago', '')
     fecha_desde = request.args.get('fecha_desde', '')
     fecha_hasta = request.args.get('fecha_hasta', '')
 
@@ -23,9 +26,17 @@ def listar():
     if cliente_id:
         query = query.filter(Venta.cliente_id == cliente_id)
     if fecha_desde:
-        query = query.filter(Venta.fecha >= datetime.fromisoformat(fecha_desde))
+        try:
+            query = query.filter(Venta.fecha >= datetime.fromisoformat(fecha_desde))
+        except ValueError:
+            flash('Fecha desde inválida.', 'danger')
+            return redirect(url_for('ventas.listar'))
     if fecha_hasta:
-        query = query.filter(Venta.fecha <= datetime.fromisoformat(fecha_hasta + 'T23:59:59'))
+        try:
+            query = query.filter(Venta.fecha <= datetime.fromisoformat(fecha_hasta + 'T23:59:59'))
+        except ValueError:
+            flash('Fecha hasta inválida.', 'danger')
+            return redirect(url_for('ventas.listar'))
     if medio_pago:
         query = query.join(Pago).filter(Pago.medio_pago == medio_pago)
 
@@ -56,13 +67,26 @@ def nueva():
         .order_by(Producto.nombre).all()
 
     if request.method == 'POST':
-        cliente_id = int(request.form['cliente_id'])
-        producto_id = int(request.form['producto_id'])
         medio_pago = request.form['medio_pago']
-        monto = float(request.form['monto'])
+
+        try:
+            cliente_id  = int(request.form['cliente_id'])
+            producto_id = int(request.form['producto_id'])
+            monto       = float(request.form['monto'])
+        except ValueError:
+            flash('Datos inválidos en el formulario.', 'danger')
+            return redirect(url_for('ventas.nueva'))
+
+        if medio_pago not in MEDIOS_PAGO_VALIDOS:
+            flash('Medio de pago no válido.', 'danger')
+            return redirect(url_for('ventas.nueva'))
+
+        if monto < 0:
+            flash('El monto no puede ser negativo.', 'danger')
+            return redirect(url_for('ventas.nueva'))
 
         producto = Producto.query.filter_by(id=producto_id, empresa_id=current_user.empresa_id).first_or_404()
-        cliente = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
+        cliente  = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
 
         cliente.saldo_sesiones += producto.cantidad_sesiones
 
@@ -99,9 +123,18 @@ def nueva():
 @ventas_bp.route('/pago_deuda/<int:cliente_id>', methods=['POST'])
 @login_required
 def pago_deuda(cliente_id):
-    cliente = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
-    monto_a_pagar = float(request.form['monto'])
+    cliente    = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
     medio_pago = request.form['medio_pago']
+
+    try:
+        monto_a_pagar = float(request.form['monto'])
+    except ValueError:
+        flash('El monto ingresado no es válido.', 'danger')
+        return redirect(url_for('clientes.detalle', cliente_id=cliente.id))
+
+    if medio_pago not in MEDIOS_PAGO_VALIDOS:
+        flash('Medio de pago no válido.', 'danger')
+        return redirect(url_for('clientes.detalle', cliente_id=cliente.id))
 
     deuda_total = abs(cliente.saldo_pesos)
     if cliente.saldo_pesos >= 0 or monto_a_pagar <= 0:
@@ -143,18 +176,18 @@ def pago_deuda(cliente_id):
 @login_required
 def exportar_excel():
     eid = current_user.empresa_id
-    wb = openpyxl.Workbook()
+    wb  = openpyxl.Workbook()
 
-    estilo_header = Font(bold=True, color='FFFFFF')
-    fill_header = PatternFill(fill_type='solid', fgColor='2563EB')
+    estilo_header    = Font(bold=True, color='FFFFFF')
+    fill_header      = PatternFill(fill_type='solid', fgColor='2563EB')
     alineacion_centro = Alignment(horizontal='center')
 
     def crear_hoja(wb, nombre, columnas, filas):
         ws = wb.create_sheet(title=nombre)
         for col_idx, col_nombre in enumerate(columnas, 1):
             celda = ws.cell(row=1, column=col_idx, value=col_nombre)
-            celda.font = estilo_header
-            celda.fill = fill_header
+            celda.font      = estilo_header
+            celda.fill      = fill_header
             celda.alignment = alineacion_centro
         for fila_idx, fila in enumerate(filas, 2):
             for col_idx, valor in enumerate(fila, 1):
