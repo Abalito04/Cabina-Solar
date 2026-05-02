@@ -26,6 +26,17 @@ Sistema web multi-tenant desarrollado en Flask para administrar clientes, venta 
 - **Servidor**: Gunicorn
 - **Hosting**: Railway
 
+## 🔒 Seguridad
+
+- Protección CSRF en todos los formularios (Flask-WTF)
+- Rate limiting en login: máximo 5 intentos por minuto (Flask-Limiter)
+- Cookies de sesión seguras: `SECURE`, `HTTPONLY`, `SAMESITE=Lax`
+- Timeout de sesión automático a las 8 horas de inactividad
+- Validación de inputs del lado del servidor en todas las rutas
+- Variables de entorno obligatorias: la app no arranca sin `SECRET_KEY` ni `DATABASE_URL`
+- Páginas de error personalizadas (403, 404, 500)
+- Logging de eventos de seguridad (logins, logouts, errores)
+
 ## ⚙️ Instalación local
 
 1. **Clonar el repositorio**:
@@ -47,39 +58,37 @@ Sistema web multi-tenant desarrollado en Flask para administrar clientes, venta 
    pip install -r requirements.txt
    ```
 
-4. **Aplicar migraciones**:
-   ```bash
-   flask db upgrade
-   ```
+4. **Configurar variables de entorno** — creá un archivo `.env` en la raíz:
+DATABASE_URL=sqlite:///cabina_solar.db
+SECRET_KEY=una-clave-secreta-larga-y-aleatoria
 
-5. **Crear empresa y usuario inicial** (requiere `seed.py` con datos propios):
-   ```bash
-   python seed.py
-   ```
 
-6. **Ejecutar**:
-   ```bash
-   python run.py
-   ```
-   Accedé en: `http://127.0.0.1:5000`
-
-## 🔐 Variables de entorno
-
-Creá un archivo `.env` en la raíz con:
-
+5. **Aplicar migraciones**:
+```bash
+flask db upgrade
 ```
-DATABASE_URL=postgresql://... (o dejarlo vacío para usar SQLite local)
-SECRET_KEY=tu-clave-secreta
+
+6. **Crear empresa y usuario inicial**:
+```bash
+python seed.py
 ```
+
+7. **Ejecutar**:
+```bash
+python run.py
+```
+Accedé en: `http://127.0.0.1:5000`
 
 ## 📦 Deploy en Railway
 
 El proyecto está configurado para desplegarse automáticamente desde GitHub. Railway ejecuta:
-```
 flask db upgrade && gunicorn "app:create_app()"
-```
+
+
+Las variables de entorno `SECRET_KEY` y `DATABASE_URL` deben estar definidas en el panel de Railway. La app no arranca si alguna falta.
 
 ## 📱 Próximos pasos
 - Panel de administración para gestionar empresas y usuarios
 - Roles de usuario (admin / empleado)
 - Notificaciones y recordatorios de turnos por email o WhatsApp
+- Paginación en listas de clientes, ventas y turnos      
