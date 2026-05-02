@@ -133,7 +133,8 @@
 let intervalo = null;
 let timestampFin = null;
 let alarmaDisparada = false;
-let intervaloAlarma = null;  // ← nuevo
+let intervaloAlarma = null;
+let audioCtx = null;  // ← se crea al tocar Iniciar
 
 function pedirPermiso() {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -156,6 +157,15 @@ function abrirTemporizador(nombreCliente) {
 }
 
 function iniciarTemporizador() {
+    // Crear AudioContext dentro del gesto del usuario
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resumir si está suspendido
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
     const minutos = parseInt(document.getElementById('duracionSelect').value);
     timestampFin = Date.now() + minutos * 60 * 1000;
     alarmaDisparada = false;
@@ -184,9 +194,8 @@ function tick() {
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
         }
-        // Sonar cada 2 segundos hasta que cierren
         beep();
-        intervaloAlarma = setInterval(beep, 2000);
+        intervaloAlarma = setInterval(beep, 4000);
         return;
     }
     if (restante > 0) {
@@ -205,21 +214,20 @@ function detenerTemporizador() {
 }
 
 function beep() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.4, 0.8].forEach(delay => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = 880;
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.6, ctx.currentTime + delay);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
-            osc.start(ctx.currentTime + delay);
-            osc.stop(ctx.currentTime + delay + 0.5);
-        });
-    } catch(e) {}
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+    [0, 0.4, 0.8].forEach(delay => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.6, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.5);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.5);
+    });
 }
 
 function enviarNotificacion() {
