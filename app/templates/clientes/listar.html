@@ -44,6 +44,7 @@
                             <form action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}"
                                   method="post" class="d-inline"
                                   onsubmit="return confirm('¿Eliminar cliente?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
                             </form>
                         </div>
@@ -95,6 +96,7 @@
                 <form action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}"
                       method="post" class="d-inline"
                       onsubmit="return confirm('¿Eliminar cliente?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
                 </form>
             </div>

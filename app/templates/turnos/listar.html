@@ -38,6 +38,7 @@
                             <form action="{{ url_for('turnos.marcar_realizado', turno_id=turno.id) }}"
                                   method="post" class="d-inline"
                                   onsubmit="return confirm('¿Confirmar que la sesión se realizó?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>  
                                 <button class="btn btn-sm btn-success" type="submit">✔</button>
                             </form>
                             <button class="btn btn-sm btn-outline-warning"
@@ -91,6 +92,7 @@
                 <form action="{{ url_for('turnos.marcar_realizado', turno_id=turno.id) }}"
                       method="post" class="d-inline"
                       onsubmit="return confirm('¿Confirmar que la sesión se realizó?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button class="btn btn-sm btn-success" type="submit">✔ Realizado</button>
                 </form>
                 <button class="btn btn-sm btn-outline-warning"

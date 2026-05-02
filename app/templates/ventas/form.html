@@ -4,6 +4,7 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <form method="post" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="col-md-6">
                 <label class="form-label">Cliente</label>
                 <select class="form-select" name="cliente_id" required>
