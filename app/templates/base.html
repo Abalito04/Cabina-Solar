@@ -136,7 +136,7 @@ let intervalo = null;
 let timestampFin = null;
 let alarmaDisparada = false;
 let intervaloAlarma = null;
-let audioCtx = null;  // ← se crea al tocar Iniciar
+let audioCtx = null;
 
 function pedirPermiso() {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -148,7 +148,7 @@ function abrirTemporizador(nombreCliente) {
     pedirPermiso();
     detenerTemporizador();
     alarmaDisparada = false;
-    document.getElementById('timerCliente').textContent = '👤 ' + nombreCliente;
+    document.getElementById('timerCliente').textContent = '\ud83d\udc64 ' + nombreCliente;
     document.getElementById('selectorDuracion').style.display = '';
     document.getElementById('cuentaRegresiva').style.display = 'none';
     document.getElementById('cuentaRegresiva').textContent = '00:00';
@@ -159,16 +159,16 @@ function abrirTemporizador(nombreCliente) {
 }
 
 function iniciarTemporizador() {
-    // Crear AudioContext dentro del gesto del usuario
-    if (!audioCtx) {
+    // Crear o reutilizar AudioContext dentro del gesto del usuario
+    if (!audioCtx || audioCtx.state === 'closed') {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    // Resumir si está suspendido
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
 
-    const minutos = parseInt(document.getElementById('duracionSelect').value);
+    // parseFloat para soportar 0.5 (30 seg) y 1 (1 min)
+    const minutos = parseFloat(document.getElementById('duracionSelect').value);
     timestampFin = Date.now() + minutos * 60 * 1000;
     alarmaDisparada = false;
     document.getElementById('selectorDuracion').style.display = 'none';
@@ -192,6 +192,7 @@ function tick() {
         document.getElementById('mensajeTerminado').style.display = '';
         document.getElementById('btnDetener').style.display = 'none';
         enviarNotificacion();
+        // Reabrir modal si estaba cerrado
         const modal = document.getElementById('modalTemporizador');
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
@@ -216,26 +217,34 @@ function detenerTemporizador() {
 }
 
 function beep() {
-    if (!audioCtx) return;
-    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-    [0, 0.4, 0.8].forEach(delay => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.value = 880;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.6, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.5);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.5);
-    });
+    // Crear contexto nuevo si fue cerrado o no existe
+    try {
+        if (!audioCtx || audioCtx.state === 'closed') {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const ctx = audioCtx;
+        const resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+        resume.then(() => {
+            [0, 0.4, 0.8].forEach(delay => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.6, ctx.currentTime + delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
+                osc.start(ctx.currentTime + delay);
+                osc.stop(ctx.currentTime + delay + 0.5);
+            });
+        });
+    } catch(e) { console.warn('beep error:', e); }
 }
 
 function enviarNotificacion() {
     if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('⏱ Cabina Solar', {
-            body: '¡La sesión ha terminado!',
+        new Notification('\u23f1 Cabina Solar', {
+            body: '\u00a1La sesi\u00f3n ha terminado!',
             icon: '/static/icons/icon-192.png'
         });
     }
