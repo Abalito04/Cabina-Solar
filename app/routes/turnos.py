@@ -4,7 +4,11 @@ from flask_login import login_required, current_user
 from ..extensions import db
 from ..models import Cliente, TurnoSesion
 
+
 turnos_bp = Blueprint('turnos', __name__)
+
+ESTADOS_VALIDOS = {'pendiente', 'realizado', 'cancelado'}
+
 
 @turnos_bp.route('/')
 @login_required
@@ -14,6 +18,7 @@ def listar():
         .order_by(TurnoSesion.fecha_hora_turno.desc()).all()
     return render_template('turnos/listar.html', turnos=turnos)
 
+
 @turnos_bp.route('/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo():
@@ -21,10 +26,20 @@ def nuevo():
         .order_by(Cliente.apellido, Cliente.nombre).all()
 
     if request.method == 'POST':
-        cliente_id = int(request.form['cliente_id'])
-        fecha_hora = request.form['fecha_hora_turno']
-        estado = request.form['estado']
+        fecha_hora  = request.form['fecha_hora_turno']
+        estado      = request.form['estado']
         observacion = request.form.get('observacion', '').strip()
+
+        try:
+            cliente_id     = int(request.form['cliente_id'])
+            fecha_hora_dt  = datetime.fromisoformat(fecha_hora)
+        except ValueError:
+            flash('Datos inválidos en el formulario.', 'danger')
+            return redirect(url_for('turnos.nuevo'))
+
+        if estado not in ESTADOS_VALIDOS:
+            flash('Estado de turno no válido.', 'danger')
+            return redirect(url_for('turnos.nuevo'))
 
         cliente = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
 
@@ -36,7 +51,7 @@ def nuevo():
 
         turno = TurnoSesion(
             cliente_id=cliente_id,
-            fecha_hora_turno=datetime.fromisoformat(fecha_hora),
+            fecha_hora_turno=fecha_hora_dt,
             estado='pendiente',
             observacion=observacion or None,
         )
@@ -68,7 +83,6 @@ def marcar_realizado(turno_id):
 
     db.session.commit()
     flash('Turno marcado como realizado. Se descontó una sesión al cliente.', 'success')
-
     return redirect(url_for('turnos.listar'))
 
 
@@ -80,8 +94,20 @@ def editar(turno_id):
 
     if request.method == 'POST':
         estado_nuevo = request.form['estado']
+        fecha_hora   = request.form['fecha_hora_turno']
+
+        try:
+            fecha_hora_dt = datetime.fromisoformat(fecha_hora)
+        except ValueError:
+            flash('La fecha y hora ingresada no es válida.', 'danger')
+            return redirect(url_for('turnos.editar', turno_id=turno.id))
+
+        if estado_nuevo not in ESTADOS_VALIDOS:
+            flash('Estado de turno no válido.', 'danger')
+            return redirect(url_for('turnos.editar', turno_id=turno.id))
+
         estado_viejo = turno.estado
-        cliente = turno.cliente
+        cliente      = turno.cliente
 
         if estado_viejo != 'realizado' and estado_nuevo == 'realizado':
             if cliente.saldo_sesiones <= 0:
@@ -92,9 +118,9 @@ def editar(turno_id):
         elif estado_viejo == 'realizado' and estado_nuevo != 'realizado':
             cliente.saldo_sesiones += 1
 
-        turno.estado = estado_nuevo
-        turno.fecha_hora_turno = datetime.fromisoformat(request.form['fecha_hora_turno'])
-        turno.observacion = request.form.get('observacion', '').strip()
+        turno.estado           = estado_nuevo
+        turno.fecha_hora_turno = fecha_hora_dt
+        turno.observacion      = request.form.get('observacion', '').strip()
 
         db.session.commit()
         flash('Turno modificado correctamente.', 'success')
