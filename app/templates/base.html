@@ -116,9 +116,18 @@ let timestampFin = null;
 let alarmaDisparada = false;
 let intervaloAlarma = null;
 let nombreClienteActual = '';
+// AudioContext persistente — creado una vez con gesto y reutilizado
+let actxPersistente = null;
 
-function crearBeep() {
-    const actx = new (window.AudioContext || window.webkitAudioContext)();
+function obtenerActx() {
+    if (!actxPersistente || actxPersistente.state === 'closed') {
+        actxPersistente = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return actxPersistente;
+}
+
+// Construye el buffer de un beep triple (3 tonos)
+function crearBuffer(actx) {
     const sr = actx.sampleRate;
     const durTono = 0.25, durSilencio = 0.12, freq = 880;
     const totalMuestras = Math.round((durTono * 3 + durSilencio * 2) * sr);
@@ -133,15 +142,38 @@ function crearBeep() {
             datos[i] = env * Math.sin(2 * Math.PI * freq * t);
         }
     }
-    const src = actx.createBufferSource();
-    src.buffer = buf;
-    src.connect(actx.destination);
-    src.start(0);
-    src.onended = () => actx.close();
+    return buf;
 }
 
+// Reproduce un beep inmediato (para prueba y primer disparo)
 function beep() {
-    try { crearBeep(); } catch(e) { console.warn('beep error:', e); }
+    try {
+        const actx = obtenerActx();
+        actx.resume().then(() => {
+            const src = actx.createBufferSource();
+            src.buffer = crearBuffer(actx);
+            src.connect(actx.destination);
+            src.start(actx.currentTime);
+        });
+    } catch(e) { console.warn('beep error:', e); }
+}
+
+// Pre-programa N beeps con delay entre ellos en el mismo AudioContext
+// Esto funciona en PWA porque todo se programa dentro del mismo gesto (tick)
+function programarBeepsRepetidos(cantidad, intervaloSeg) {
+    try {
+        const actx = obtenerActx();
+        actx.resume().then(() => {
+            const buf = crearBuffer(actx);
+            const durBeep = 0.25 * 3 + 0.12 * 2; // duracion total del beep triple
+            for (let i = 0; i < cantidad; i++) {
+                const src = actx.createBufferSource();
+                src.buffer = buf;
+                src.connect(actx.destination);
+                src.start(actx.currentTime + i * intervaloSeg);
+            }
+        });
+    } catch(e) { console.warn('programarBeeps error:', e); }
 }
 
 function probarSonido() { beep(); }
@@ -185,6 +217,8 @@ function iniciarTemporizador() {
     const minutos = parseFloat(document.getElementById('duracionSelect').value);
     timestampFin = Date.now() + minutos * 60 * 1000;
     alarmaDisparada = false;
+    // Crear/desbloquear el AudioContext con este gesto del usuario
+    try { obtenerActx().resume(); } catch(e) {}
     document.getElementById('selectorDuracion').style.display = 'none';
     document.getElementById('cuentaRegresiva').style.display = '';
     document.getElementById('mensajeTerminado').style.display = 'none';
@@ -206,24 +240,27 @@ function tick() {
         document.getElementById('mensajeTerminado').style.display = '';
         document.getElementById('btnDetener').style.display = 'none';
 
-        // Primer disparo inmediato
+        // Notificacion del sistema via SW
         alarmaViaSW(nombreClienteActual);
+
+        // Vibracion
         if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500]);
-        beep();
+
+        // Pre-programar 20 beeps cada 4 segundos (= 80 segundos de alarma)
+        // Todo dentro del mismo tick -> el AudioContext ya esta desbloqueado
+        programarBeepsRepetidos(20, 4);
 
         const modal = document.getElementById('modalTemporizador');
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
         }
 
-        // Repetir beep + vibración cada 4 segundos hasta que el usuario cancele
+        // setInterval solo para vibracion y notificacion SW (no necesitan gesto)
+        let contadorSW = 0;
         intervaloAlarma = setInterval(() => {
-            beep();
             if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
-            // Notificacion del sistema cada 3 repeticiones (~12s) para no saturar
-            if (typeof intervaloAlarma._count === 'undefined') intervaloAlarma._count = 0;
-            intervaloAlarma._count++;
-            if (intervaloAlarma._count % 3 === 0) alarmaViaSW(nombreClienteActual);
+            contadorSW++;
+            if (contadorSW % 3 === 0) alarmaViaSW(nombreClienteActual);
         }, 4000);
         return;
     }
@@ -238,6 +275,11 @@ function tick() {
 function detenerTemporizador() {
     if (intervalo) { clearInterval(intervalo); intervalo = null; }
     if (intervaloAlarma) { clearInterval(intervaloAlarma); intervaloAlarma = null; }
+    // Cerrar el AudioContext para cancelar todos los beeps pendientes
+    if (actxPersistente && actxPersistente.state !== 'closed') {
+        actxPersistente.close();
+        actxPersistente = null;
+    }
     if (navigator.vibrate) navigator.vibrate(0);
     timestampFin = null;
     alarmaDisparada = false;
