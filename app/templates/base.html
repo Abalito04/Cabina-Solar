@@ -93,6 +93,9 @@
                     <div class="mt-3">
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="probarSonido()">🔔 Probar sonido</button>
                     </div>
+                    <div id="avisoNotif" class="mt-2 text-warning small" style="display:none">
+                        ⚠️ Activá las notificaciones para recibir la alarma
+                    </div>
                 </div>
                 <div id="cuentaRegresiva" style="font-size:4rem; font-weight:800; letter-spacing:2px; display:none">00:00</div>
                 <div id="mensajeTerminado" class="text-success fw-bold mt-2" style="display:none; font-size:1.2rem">✅ ¡Sesión terminada!</div>
@@ -112,8 +115,9 @@ let intervalo = null;
 let timestampFin = null;
 let alarmaDisparada = false;
 let intervaloAlarma = null;
+let nombreClienteActual = '';
 
-// Crear AudioContext y buffer SIEMPRE dentro de un gesto de usuario
+// --- Sonido via AudioContext (funciona cuando la app esta en primer plano con gesto) ---
 function crearBeep() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
     const sr = actx.sampleRate;
@@ -134,12 +138,9 @@ function crearBeep() {
     src.buffer = buf;
     src.connect(actx.destination);
     src.start(0);
-    // Cerrar el contexto cuando termine para liberar recursos
     src.onended = () => actx.close();
 }
 
-// Cada llamada a beep() crea un AudioContext NUEVO dentro del mismo tick de evento
-// Esto garantiza que siempre este dentro del "trusted user activation" en PWA
 function beep() {
     try { crearBeep(); } catch(e) { console.warn('beep error:', e); }
 }
@@ -148,9 +149,26 @@ function probarSonido() {
     beep();
 }
 
+// --- Alarma via Service Worker (funciona aunque no haya gesto de usuario) ---
+function alarmaViaSW(nombre) {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready.then(reg => {
+        if (reg.active) {
+            reg.active.postMessage({ tipo: 'alarma', nombre: nombre });
+        }
+    });
+}
+
+// --- Permisos de notificacion ---
 function pedirPermiso() {
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().then(p => {
+            document.getElementById('avisoNotif').style.display =
+                p === 'granted' ? 'none' : '';
+        });
+    } else if (Notification.permission === 'denied') {
+        document.getElementById('avisoNotif').style.display = '';
     }
 }
 
@@ -158,6 +176,7 @@ function abrirTemporizador(nombreCliente) {
     pedirPermiso();
     detenerTemporizador();
     alarmaDisparada = false;
+    nombreClienteActual = nombreCliente || '';
     document.getElementById('timerCliente').textContent = '\u{1F464} ' + nombreCliente;
     document.getElementById('selectorDuracion').style.display = '';
     document.getElementById('cuentaRegresiva').style.display = 'none';
@@ -165,6 +184,9 @@ function abrirTemporizador(nombreCliente) {
     document.getElementById('mensajeTerminado').style.display = 'none';
     document.getElementById('btnIniciar').style.display = '';
     document.getElementById('btnDetener').style.display = 'none';
+    // Mostrar aviso si notificaciones no estan activadas
+    document.getElementById('avisoNotif').style.display =
+        ('Notification' in window && Notification.permission !== 'granted') ? '' : 'none';
     new bootstrap.Modal(document.getElementById('modalTemporizador')).show();
 }
 
@@ -192,18 +214,27 @@ function tick() {
         document.getElementById('cuentaRegresiva').style.display = 'none';
         document.getElementById('mensajeTerminado').style.display = '';
         document.getElementById('btnDetener').style.display = 'none';
-        enviarNotificacion();
+
+        // 1. Notificacion del sistema via SW (suena aunque no haya gesto)
+        alarmaViaSW(nombreClienteActual);
+
+        // 2. Vibracion
+        if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500]);
+
+        // 3. Audio directo (por si la app esta en primer plano y hay contexto activo)
+        beep();
+
+        // 4. Reabrir modal si estaba cerrado
         const modal = document.getElementById('modalTemporizador');
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
         }
-        // La alarma suena sola (sin gesto) - usamos vibración como respaldo
-        if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500]);
-        beep();
+
+        // Repetir notificacion y vibracion cada 10 seg hasta que el usuario la cierre
         intervaloAlarma = setInterval(() => {
+            alarmaViaSW(nombreClienteActual);
             if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
-            beep();
-        }, 3500);
+        }, 10000);
         return;
     }
     if (restante > 0) {
@@ -220,15 +251,6 @@ function detenerTemporizador() {
     if (navigator.vibrate) navigator.vibrate(0);
     timestampFin = null;
     alarmaDisparada = false;
-}
-
-function enviarNotificacion() {
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('\u23F1 Cabina Solar', {
-            body: '\u00A1La sesi\u00F3n ha terminado!',
-            icon: '/static/icons/icon-192.png'
-        });
-    }
 }
 
 document.addEventListener('visibilitychange', () => {
