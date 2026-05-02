@@ -117,7 +117,6 @@ let alarmaDisparada = false;
 let intervaloAlarma = null;
 let nombreClienteActual = '';
 
-// --- Sonido via AudioContext (funciona cuando la app esta en primer plano con gesto) ---
 function crearBeep() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
     const sr = actx.sampleRate;
@@ -145,27 +144,20 @@ function beep() {
     try { crearBeep(); } catch(e) { console.warn('beep error:', e); }
 }
 
-function probarSonido() {
-    beep();
-}
+function probarSonido() { beep(); }
 
-// --- Alarma via Service Worker (funciona aunque no haya gesto de usuario) ---
 function alarmaViaSW(nombre) {
     if (!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.ready.then(reg => {
-        if (reg.active) {
-            reg.active.postMessage({ tipo: 'alarma', nombre: nombre });
-        }
+        if (reg.active) reg.active.postMessage({ tipo: 'alarma', nombre: nombre });
     });
 }
 
-// --- Permisos de notificacion ---
 function pedirPermiso() {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'default') {
         Notification.requestPermission().then(p => {
-            document.getElementById('avisoNotif').style.display =
-                p === 'granted' ? 'none' : '';
+            document.getElementById('avisoNotif').style.display = p === 'granted' ? 'none' : '';
         });
     } else if (Notification.permission === 'denied') {
         document.getElementById('avisoNotif').style.display = '';
@@ -184,7 +176,6 @@ function abrirTemporizador(nombreCliente) {
     document.getElementById('mensajeTerminado').style.display = 'none';
     document.getElementById('btnIniciar').style.display = '';
     document.getElementById('btnDetener').style.display = 'none';
-    // Mostrar aviso si notificaciones no estan activadas
     document.getElementById('avisoNotif').style.display =
         ('Notification' in window && Notification.permission !== 'granted') ? '' : 'none';
     new bootstrap.Modal(document.getElementById('modalTemporizador')).show();
@@ -215,26 +206,25 @@ function tick() {
         document.getElementById('mensajeTerminado').style.display = '';
         document.getElementById('btnDetener').style.display = 'none';
 
-        // 1. Notificacion del sistema via SW (suena aunque no haya gesto)
+        // Primer disparo inmediato
         alarmaViaSW(nombreClienteActual);
-
-        // 2. Vibracion
         if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500]);
-
-        // 3. Audio directo (por si la app esta en primer plano y hay contexto activo)
         beep();
 
-        // 4. Reabrir modal si estaba cerrado
         const modal = document.getElementById('modalTemporizador');
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
         }
 
-        // Repetir notificacion y vibracion cada 10 seg hasta que el usuario la cierre
+        // Repetir beep + vibración cada 4 segundos hasta que el usuario cancele
         intervaloAlarma = setInterval(() => {
-            alarmaViaSW(nombreClienteActual);
+            beep();
             if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
-        }, 10000);
+            // Notificacion del sistema cada 3 repeticiones (~12s) para no saturar
+            if (typeof intervaloAlarma._count === 'undefined') intervaloAlarma._count = 0;
+            intervaloAlarma._count++;
+            if (intervaloAlarma._count % 3 === 0) alarmaViaSW(nombreClienteActual);
+        }, 4000);
         return;
     }
     if (restante > 0) {
