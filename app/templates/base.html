@@ -35,13 +35,11 @@
             </svg>
             <span>Cabina Solar</span>
         </a>
-
         <button class="navbar-toggler cs-toggler" type="button"
                 data-bs-toggle="collapse" data-bs-target="#navMain"
                 aria-controls="navMain" aria-expanded="false" aria-label="Menú">
             <span class="cs-hamburger">☰</span>
         </button>
-
         <div class="collapse navbar-collapse" id="navMain">
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 py-2 py-lg-0">
                 <li class="nav-item"><a class="nav-link cs-nav-link" href="{{ url_for('main.index') }}">🏠 Inicio</a></li>
@@ -69,11 +67,6 @@
     {% block content %}{% endblock %}
 </div>
 
-<!-- Audio HTML (respaldo para navegador normal) -->
-<audio id="audioAlarma" preload="auto">
-    <source src="data:audio/wav;base64,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" type="audio/wav">
-</audio>
-
 <!-- Modal temporizador global -->
 <div class="modal fade" id="modalTemporizador" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -97,6 +90,9 @@
                         <option value="45">45 minutos</option>
                         <option value="60">60 minutos</option>
                     </select>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="probarSonido()">🔔 Probar sonido</button>
+                    </div>
                 </div>
                 <div id="cuentaRegresiva" style="font-size:4rem; font-weight:800; letter-spacing:2px; display:none">00:00</div>
                 <div id="mensajeTerminado" class="text-success fw-bold mt-2" style="display:none; font-size:1.2rem">✅ ¡Sesión terminada!</div>
@@ -117,20 +113,14 @@ let timestampFin = null;
 let alarmaDisparada = false;
 let intervaloAlarma = null;
 
-// --- AudioContext desbloqueado desde el primer toque del usuario ---
-let actx = null;
-let audioBuffer = null;
-
-function iniciarAudioCtx() {
-    if (actx) return;
-    actx = new (window.AudioContext || window.webkitAudioContext)();
-    // Generar el buffer del beep (3 tonos de 880Hz, 0.25s cada uno)
+// Crear AudioContext y buffer SIEMPRE dentro de un gesto de usuario
+function crearBeep() {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
     const sr = actx.sampleRate;
-    const durTono = 0.25, durSilencio = 0.12;
+    const durTono = 0.25, durSilencio = 0.12, freq = 880;
     const totalMuestras = Math.round((durTono * 3 + durSilencio * 2) * sr);
-    audioBuffer = actx.createBuffer(1, totalMuestras, sr);
-    const datos = audioBuffer.getChannelData(0);
-    const freq = 880;
+    const buf = actx.createBuffer(1, totalMuestras, sr);
+    const datos = buf.getChannelData(0);
     for (let tono = 0; tono < 3; tono++) {
         const inicio = Math.round((tono * (durTono + durSilencio)) * sr);
         const fin = inicio + Math.round(durTono * sr);
@@ -140,41 +130,24 @@ function iniciarAudioCtx() {
             datos[i] = env * Math.sin(2 * Math.PI * freq * t);
         }
     }
+    const src = actx.createBufferSource();
+    src.buffer = buf;
+    src.connect(actx.destination);
+    src.start(0);
+    // Cerrar el contexto cuando termine para liberar recursos
+    src.onended = () => actx.close();
 }
 
-// Desbloquear en el primer toque sobre cualquier parte de la page
-document.addEventListener('touchstart', iniciarAudioCtx, { once: true, passive: true });
-document.addEventListener('mousedown',  iniciarAudioCtx, { once: true, passive: true });
-
-function beepCtx() {
-    if (!actx || !audioBuffer) return;
-    const resume = actx.state === 'suspended' ? actx.resume() : Promise.resolve();
-    resume.then(() => {
-        const src = actx.createBufferSource();
-        src.buffer = audioBuffer;
-        src.connect(actx.destination);
-        src.start(0);
-    }).catch(e => console.warn('beepCtx error:', e));
-}
-
-// --- Audio HTML como respaldo secundario ---
-const audioEl = document.getElementById('audioAlarma');
-function beepHtml() {
-    if (!audioEl) return;
-    audioEl.currentTime = 0;
-    audioEl.play().catch(() => {});
-}
-
+// Cada llamada a beep() crea un AudioContext NUEVO dentro del mismo tick de evento
+// Esto garantiza que siempre este dentro del "trusted user activation" en PWA
 function beep() {
-    // Intentamos AudioContext primero (mejor soporte PWA), luego HTML
-    if (actx && audioBuffer) {
-        beepCtx();
-    } else {
-        beepHtml();
-    }
+    try { crearBeep(); } catch(e) { console.warn('beep error:', e); }
 }
 
-// --- Logica del temporizador ---
+function probarSonido() {
+    beep();
+}
+
 function pedirPermiso() {
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -196,12 +169,6 @@ function abrirTemporizador(nombreCliente) {
 }
 
 function iniciarTemporizador() {
-    // Este click desbloquea el AudioContext si aun no se hizo
-    iniciarAudioCtx();
-    if (actx && actx.state === 'suspended') actx.resume();
-    // Tambien desbloquear el elemento audio HTML
-    if (audioEl) { audioEl.load(); audioEl.play().then(() => audioEl.pause()).catch(() => {}); }
-
     const minutos = parseFloat(document.getElementById('duracionSelect').value);
     timestampFin = Date.now() + minutos * 60 * 1000;
     alarmaDisparada = false;
@@ -230,8 +197,13 @@ function tick() {
         if (!modal.classList.contains('show')) {
             new bootstrap.Modal(modal).show();
         }
+        // La alarma suena sola (sin gesto) - usamos vibración como respaldo
+        if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500]);
         beep();
-        intervaloAlarma = setInterval(beep, 3500);
+        intervaloAlarma = setInterval(() => {
+            if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+            beep();
+        }, 3500);
         return;
     }
     if (restante > 0) {
@@ -245,7 +217,7 @@ function tick() {
 function detenerTemporizador() {
     if (intervalo) { clearInterval(intervalo); intervalo = null; }
     if (intervaloAlarma) { clearInterval(intervaloAlarma); intervaloAlarma = null; }
-    if (audioEl) { audioEl.pause(); audioEl.currentTime = 0; }
+    if (navigator.vibrate) navigator.vibrate(0);
     timestampFin = null;
     alarmaDisparada = false;
 }
@@ -259,14 +231,10 @@ function enviarNotificacion() {
     }
 }
 
-// Cuando la pantalla vuelve a encenderse: reanudar AudioContext y verificar tick
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        if (actx && actx.state === 'suspended') actx.resume();
-        if (timestampFin && !alarmaDisparada) {
-            tick();
-            if (!intervalo) intervalo = setInterval(tick, 500);
-        }
+    if (document.visibilityState === 'visible' && timestampFin && !alarmaDisparada) {
+        tick();
+        if (!intervalo) intervalo = setInterval(tick, 500);
     }
 });
 </script>
