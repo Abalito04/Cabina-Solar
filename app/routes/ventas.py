@@ -88,6 +88,10 @@ def nueva():
         producto = Producto.query.filter_by(id=producto_id, empresa_id=current_user.empresa_id).first_or_404()
         cliente  = Cliente.query.filter_by(id=cliente_id, empresa_id=current_user.empresa_id).first_or_404()
 
+        if monto > producto.precio:
+            flash(f'El monto no puede superar el total de la venta (${producto.precio:,.0f}).', 'danger')
+            return redirect(url_for('ventas.nueva'))
+
         cliente.saldo_sesiones += producto.cantidad_sesiones
 
         venta = Venta(
@@ -118,7 +122,6 @@ def nueva():
         productos=productos,
         cliente_preseleccionado=cliente_preseleccionado,
     )
-
 
 @ventas_bp.route('/pago_deuda/<int:cliente_id>', methods=['POST'])
 @login_required
