@@ -172,6 +172,22 @@ def pago_deuda(cliente_id):
     flash(f'Se registró un pago de ${monto_a_pagar:.2f} correctamente.', 'success')
     return redirect(url_for('clientes.detalle', cliente_id=cliente.id))
 
+@ventas_bp.route('/<int:venta_id>/eliminar', methods=['POST'])
+@login_required
+def eliminar(venta_id):
+    venta = Venta.query.join(Cliente)\
+        .filter(Venta.id == venta_id, Cliente.empresa_id == current_user.empresa_id).first_or_404()
+
+    cliente = venta.cliente
+
+    # Restar las sesiones que se habían sumado al comprar
+    cliente.saldo_sesiones -= venta.sesiones_compradas
+
+    db.session.delete(venta)
+    db.session.commit()
+    flash('Venta eliminada correctamente.', 'success')
+    return redirect(url_for('clientes.detalle', cliente_id=cliente.id))
+
 
 # ─── EXPORTACIÓN A EXCEL ──────────────────────────────────────────────────────
 

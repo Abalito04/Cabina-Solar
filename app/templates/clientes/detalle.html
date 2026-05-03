@@ -34,7 +34,7 @@
                 ⚠️ Deuda pendiente: -${{ '%.2f'|format(cliente.saldo_pesos|abs) }}
             </div>
             <form action="{{ url_for('ventas.pago_deuda', cliente_id=cliente.id) }}" method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/> 
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="row g-2">
                     <div class="col-12 col-sm-auto">
                         <select name="medio_pago" id="medio_pago_deuda" class="form-select form-select-sm"
@@ -86,12 +86,23 @@
                 <ul class="list-group list-group-flush">
                     {% for venta in ventas %}
                     <li class="list-group-item px-3 py-2">
+                        <!-- ↓ CAMBIADO: badge + botón eliminar en el mismo flex -->
                         <div class="d-flex justify-content-between align-items-start">
                             <strong>{{ venta.producto.nombre }}</strong>
-                            <span class="badge text-bg-success ms-2 text-nowrap">
-                                +{{ venta.sesiones_compradas }} ses.
-                            </span>
+                            <div class="d-flex align-items-center gap-2 ms-2">
+                                <span class="badge text-bg-success text-nowrap">
+                                    +{{ venta.sesiones_compradas }} ses.
+                                </span>
+                                <form action="{{ url_for('ventas.eliminar', venta_id=venta.id) }}" method="POST"
+                                      onsubmit="return confirm('¿Eliminar esta venta? Se restarán {{ venta.sesiones_compradas }} sesiones al cliente.')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger btn-sm py-0 px-1" title="Eliminar venta">
+                                        🗑
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                        <!-- ↑ FIN CAMBIO -->
                         <div class="small mt-1" style="color:var(--cs-text-muted)">
                             {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }} —
                             Total: <span class="fw-semibold" style="color:var(--cs-gold-dark)">
