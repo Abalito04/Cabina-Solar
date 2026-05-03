@@ -31,8 +31,8 @@ def nuevo():
         observacion = request.form.get('observacion', '').strip()
 
         try:
-            cliente_id     = int(request.form['cliente_id'])
-            fecha_hora_dt  = datetime.fromisoformat(fecha_hora)
+            cliente_id    = int(request.form['cliente_id'])
+            fecha_hora_dt = datetime.fromisoformat(fecha_hora)
         except ValueError:
             flash('Datos inválidos en el formulario.', 'danger')
             return redirect(url_for('turnos.nuevo'))
@@ -145,6 +145,20 @@ def realizar_rapido(turno_id):
     return redirect(url_for('main.index'))
 
 
+# ↓ AGREGADO: cancelar desde el dashboard
+@turnos_bp.route('/<int:turno_id>/cancelar_rapido', methods=['POST'])
+@login_required
+def cancelar_rapido(turno_id):
+    turno = TurnoSesion.query.join(Cliente)\
+        .filter(TurnoSesion.id == turno_id, Cliente.empresa_id == current_user.empresa_id).first_or_404()
+    if turno.estado == 'pendiente':
+        turno.estado = 'cancelado'
+        db.session.commit()
+        flash(f'Turno de {turno.cliente.nombre_completo} cancelado.', 'warning')
+    return redirect(url_for('main.index'))
+
+
+# ↓ AGREGADO: cancelar desde el detalle del cliente
 @turnos_bp.route('/<int:turno_id>/cancelar', methods=['POST'])
 @login_required
 def cancelar(turno_id):
@@ -157,5 +171,5 @@ def cancelar(turno_id):
 
     turno.estado = 'cancelado'
     db.session.commit()
-    flash(f'Turno cancelado correctamente.', 'warning')
+    flash('Turno cancelado correctamente.', 'warning')
     return redirect(url_for('clientes.detalle', cliente_id=turno.cliente_id))
