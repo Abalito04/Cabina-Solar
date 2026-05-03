@@ -62,9 +62,12 @@
                                     {{ turno.estado }}
                                 </span>
                                 {% if turno.estado == 'pendiente' %}
-                                <button class="btn btn-sm btn-outline-warning"
+                                <button class="btn btn-sm btn-outline-warning d-inline-flex align-items-center justify-content-center"
                                         onclick="abrirTemporizador('{{ turno.cliente.nombre_completo }}')"
-                                        title="Iniciar temporizador">⏱</button>
+                                        title="Iniciar temporizador"
+                                        style="width:34px; height:34px;">
+                                    <i class="bi bi-stopwatch"></i>
+                                </button>
                                 <form action="{{ url_for('turnos.realizar_rapido', turno_id=turno.id) }}" method="post" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button class="btn btn-sm btn-success" type="submit" title="Marcar como realizado">✔</button>
