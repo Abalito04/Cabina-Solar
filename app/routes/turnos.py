@@ -145,13 +145,17 @@ def realizar_rapido(turno_id):
     return redirect(url_for('main.index'))
 
 
-@turnos_bp.route('/<int:turno_id>/cancelar_rapido', methods=['POST'])
+@turnos_bp.route('/<int:turno_id>/cancelar', methods=['POST'])
 @login_required
-def cancelar_rapido(turno_id):
+def cancelar(turno_id):
     turno = TurnoSesion.query.join(Cliente)\
         .filter(TurnoSesion.id == turno_id, Cliente.empresa_id == current_user.empresa_id).first_or_404()
-    if turno.estado == 'pendiente':
-        turno.estado = 'cancelado'
-        db.session.commit()
-        flash(f'Turno de {turno.cliente.nombre_completo} cancelado.', 'warning')
-    return redirect(url_for('main.index'))
+
+    if turno.estado != 'pendiente':
+        flash('Este turno ya fue procesado o cancelado.', 'warning')
+        return redirect(url_for('clientes.detalle', cliente_id=turno.cliente_id))
+
+    turno.estado = 'cancelado'
+    db.session.commit()
+    flash(f'Turno cancelado correctamente.', 'warning')
+    return redirect(url_for('clientes.detalle', cliente_id=turno.cliente_id))

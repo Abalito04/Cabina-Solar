@@ -86,7 +86,6 @@
                 <ul class="list-group list-group-flush">
                     {% for venta in ventas %}
                     <li class="list-group-item px-3 py-2">
-                        <!-- ↓ CAMBIADO: badge + botón eliminar en el mismo flex -->
                         <div class="d-flex justify-content-between align-items-start">
                             <strong>{{ venta.producto.nombre }}</strong>
                             <div class="d-flex align-items-center gap-2 ms-2">
@@ -102,7 +101,6 @@
                                 </form>
                             </div>
                         </div>
-                        <!-- ↑ FIN CAMBIO -->
                         <div class="small mt-1" style="color:var(--cs-text-muted)">
                             {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }} —
                             Total: <span class="fw-semibold" style="color:var(--cs-gold-dark)">
@@ -150,13 +148,24 @@
                             <span class="fw-semibold">
                                 {{ turno.fecha_hora_turno.strftime('%d/%m/%Y %H:%M') }}
                             </span>
-                            {% if turno.estado == 'realizado' %}
-                                <span class="badge text-bg-success">Realizado</span>
-                            {% elif turno.estado == 'cancelado' %}
-                                <span class="badge text-bg-danger">Cancelado</span>
-                            {% else %}
-                                <span class="badge text-bg-secondary">Pendiente</span>
-                            {% endif %}
+                            <!-- ↓ CAMBIADO: badge + botón cancelar en el mismo flex -->
+                            <div class="d-flex align-items-center gap-2">
+                                {% if turno.estado == 'realizado' %}
+                                    <span class="badge text-bg-success">Realizado</span>
+                                {% elif turno.estado == 'cancelado' %}
+                                    <span class="badge text-bg-danger">Cancelado</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">Pendiente</span>
+                                    <form action="{{ url_for('turnos.cancelar', turno_id=turno.id) }}" method="POST"
+                                          onsubmit="return confirm('¿Cancelar este turno?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-warning btn-sm py-0 px-1" title="Cancelar turno">
+                                            ✕
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                            <!-- ↑ FIN CAMBIO -->
                         </div>
                         {% if turno.observacion %}
                         <div class="small mt-1" style="color:var(--cs-text-muted)">
