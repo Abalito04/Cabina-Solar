@@ -25,13 +25,13 @@
     <div class="col-6 col-md-3">
         <div class="kpi-card kpi-green">
             <div class="kpi-label">Ingresos hoy</div>
-            <div class="kpi-value" style="color:var(--cs-success)">${{ '%.0f'|format(ingresos_hoy) }}</div>
+            <div class="kpi-value" style="color:var(--cs-success)">${{ ingresos_hoy|moneda }}</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="kpi-card kpi-red">
             <div class="kpi-label">Deuda clientes</div>
-            <div class="kpi-value" style="color:var(--cs-danger)">${{ '%.0f'|format(deuda_total) }}</div>
+            <div class="kpi-value" style="color:var(--cs-danger)">${{ deuda_total|moneda }}</div>
         </div>
     </div>
 </div>
@@ -107,7 +107,7 @@
                        class="text-decoration-none fw-500" style="color:var(--cs-text)">
                         {{ c.nombre_completo }}
                     </a>
-                    <span class="fw-bold" style="color:var(--cs-danger)">-${{ '%.2f'|format(c.saldo_pesos|abs) }}</span>
+                    <span class="fw-bold" style="color:var(--cs-danger)">-${{ c.saldo_pesos|abs|moneda }}</span>
                 </li>
                 {% endfor %}
             </ul>

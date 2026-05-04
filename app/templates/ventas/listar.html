@@ -77,13 +77,13 @@
                         <span class="badge text-bg-primary">{{ venta.sesiones_compradas }}</span>
                     </td>
                     <td class="fw-semibold" style="color:var(--cs-gold-dark)">
-                        ${{ '%.2f'|format(venta.total) }}
+                        ${{ venta.total|moneda }}
                     </td>
                     <td>
                         {% for pago in venta.pagos %}
                         <div class="small">
                             {{ pago.medio_pago|capitalize }} —
-                            <strong>${{ '%.2f'|format(pago.monto) }}</strong>
+                            <strong>${{ pago.monto|moneda }}</strong>
                             <span style="color:var(--cs-text-muted)">({{ pago.fecha.strftime('%d/%m %H:%M') }})</span>
                             {% if pago.comprobante %}
                                 <span style="color:var(--cs-text-faint)">#{{ pago.comprobante }}</span>
@@ -104,7 +104,7 @@
             <tfoot>
                 <tr style="background:var(--cs-surface-2)">
                     <td colspan="4" class="text-end fw-bold">Total del período:</td>
-                    <td class="fw-bold" style="color:var(--cs-gold-dark)">${{ '%.2f'|format(total_filtrado) }}</td>
+                    <td class="fw-bold" style="color:var(--cs-gold-dark)">${{ total_filtrado|moneda }}</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -124,7 +124,7 @@
                     {{ venta.cliente.nombre_completo }}
                 </a>
                 <span class="fw-bold ms-2" style="color:var(--cs-gold-dark)">
-                    ${{ '%.2f'|format(venta.total) }}
+                    ${{ venta.total|moneda }}
                 </span>
             </div>
             <div class="small" style="color:var(--cs-text-muted)">
@@ -138,7 +138,7 @@
                 {% for pago in venta.pagos %}
                     <span style="color:var(--cs-text-muted)">
                         {{ pago.medio_pago|capitalize }}
-                        ${{ '%.2f'|format(pago.monto) }}
+                        ${{ pago.monto|moneda }}
                         ({{ pago.fecha.strftime('%d/%m') }})
                         {% if pago.comprobante %}
                             <span style="color:var(--cs-text-faint)">#{{ pago.comprobante }}</span>
@@ -159,7 +159,7 @@
     {% if ventas %}
     <div class="d-flex justify-content-between fw-bold px-1 pt-2 border-top mt-1">
         <span>Total del período</span>
-        <span style="color:var(--cs-gold-dark)">${{ '%.2f'|format(total_filtrado) }}</span>
+        <span style="color:var(--cs-gold-dark)">${{ total_filtrado|moneda }}</span>
     </div>
     {% endif %}
 </div>
