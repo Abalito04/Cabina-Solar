@@ -26,7 +26,7 @@
                     <td style="color:var(--cs-text-muted)">{{ producto.descripcion or '—' }}</td>
                     <td><span class="badge text-bg-primary">{{ producto.cantidad_sesiones }}</span></td>
                     <td class="fw-semibold" style="color:var(--cs-gold-dark)">
-                        ${{ '%.2f'|format(producto.precio) }}
+                        ${{ producto.precio|moneda }}
                     </td>
                     <td>
                         {% if producto.activo %}
@@ -44,7 +44,7 @@
                                   onsubmit="return confirm('¿Eliminar producto?')">
                                 <button class="btn btn-sm btn-outline-danger" type="submit">✕</button>
                             </form>
-                        </div>
+        </div>
                     </td>
                 </tr>
                 {% else %}
@@ -72,7 +72,7 @@
                     {% endif %}
                 </div>
                 <span class="fw-bold ms-2" style="color:var(--cs-gold-dark)">
-                    ${{ '%.2f'|format(producto.precio) }}
+                    ${{ producto.precio|moneda }}
                 </span>
             </div>
             <div class="d-flex align-items-center gap-2 mt-2">
