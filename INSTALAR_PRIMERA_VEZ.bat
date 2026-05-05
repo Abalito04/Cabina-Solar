@@ -1,42 +1,42 @@
 @echo off
-chcp 65001 >nul
-title Cabina Solar - Instalación inicial
+chcp 1252 >nul
+title Cabina Solar - Instalacion inicial
 color 0A
 
 echo ============================================
-echo   CABINA SOLAR - INSTALACIÓN INICIAL
+echo   CABINA SOLAR - INSTALACION INICIAL
 echo ============================================
 echo.
 
-REM ── Verificar Python ──────────────────────────────────
+REM -- Verificar Python --
 python --version >nul 2>&1
 if errorlevel 1 (
     color 0C
-    echo [ERROR] Python no está instalado.
+    echo [ERROR] Python no esta instalado.
     echo.
-    echo Por favor instalá Python desde:
+    echo Por favor instala Python desde:
     echo   https://www.python.org/downloads/
     echo.
-    echo IMPORTANTE: Durante la instalación marcá la
-    echo opción "Add Python to PATH".
+    echo IMPORTANTE: Durante la instalacion marca la
+    echo opcion "Add Python to PATH".
     echo.
     pause
     exit /b 1
 )
 echo [OK] Python encontrado.
 
-REM ── Verificar pip ─────────────────────────────────────
+REM -- Verificar pip --
 pip --version >nul 2>&1
 if errorlevel 1 (
     color 0C
-    echo [ERROR] pip no está disponible.
-    echo Reinstalá Python marcando "Add Python to PATH".
+    echo [ERROR] pip no esta disponible.
+    echo Reinstala Python marcando "Add Python to PATH".
     pause
     exit /b 1
 )
 echo [OK] pip encontrado.
 
-REM ── Buscar psql (PostgreSQL) ───────────────────────────
+REM -- Buscar PostgreSQL --
 echo.
 echo Buscando PostgreSQL...
 set PSQL_PATH=
@@ -45,33 +45,33 @@ for /d %%d in ("C:\Program Files\PostgreSQL\*") do (
 )
 if "%PSQL_PATH%"=="" (
     color 0C
-    echo [ERROR] No se encontró PostgreSQL instalado.
+    echo [ERROR] No se encontro PostgreSQL instalado.
     echo.
     echo Por favor instalalo desde:
     echo   https://www.postgresql.org/download/windows/
     echo.
-    echo Durante la instalación anotá bien la contraseña
-    echo que le ponés al usuario "postgres".
+    echo Durante la instalacion anota bien la contrasena
+    echo que le pones al usuario "postgres".
     echo.
     pause
     exit /b 1
 )
 echo [OK] PostgreSQL encontrado en: %PSQL_PATH%
 
-REM ── Pedir datos de PostgreSQL ──────────────────────────
+REM -- Pedir datos de PostgreSQL --
 echo.
 echo ============================================
-echo   CONFIGURACIÓN DE BASE DE DATOS
+echo   CONFIGURACION DE BASE DE DATOS
 echo ============================================
 echo.
-echo Se usará el usuario "postgres" de PostgreSQL.
+echo Se usara el usuario "postgres" de PostgreSQL.
 echo (Es el que creaste al instalar PostgreSQL)
 echo.
-set /p PG_PASS=Ingresá la contraseña de PostgreSQL: 
-set /p DB_NAME=Nombre de la base de datos [cabina_solar]: 
+set /p PG_PASS=Ingresa la contrasena de PostgreSQL: 
+set /p DB_NAME=Nombre de la base de datos (Enter = cabina_solar): 
 if "%DB_NAME%"=="" set DB_NAME=cabina_solar
 
-REM ── Pedir datos del usuario administrador de la app ─────────
+REM -- Pedir datos del admin de la app --
 echo.
 echo ============================================
 echo   USUARIO ADMINISTRADOR DE LA APP
@@ -79,29 +79,27 @@ echo ============================================
 echo.
 echo Este es el usuario con el que vas a entrar a Cabina Solar.
 echo.
-set /p ADMIN_USER=Nombre de usuario [Admin]: 
+set /p ADMIN_USER=Nombre de usuario (Enter = Admin): 
 if "%ADMIN_USER%"=="" set ADMIN_USER=Admin
-set /p ADMIN_PASS=Contraseña para el administrador: 
+set /p ADMIN_PASS=Contrasena para el administrador: 
 if "%ADMIN_PASS%"=="" (
     color 0E
-    echo [AVISO] No ingresaste contraseña. Se usará "Admin1234" por defecto.
-    echo         Cambiála después de iniciar sesión.
+    echo [AVISO] No ingresaste contrasena. Se usara "Admin1234" por defecto.
     set ADMIN_PASS=Admin1234
 )
 
-REM ── Crear la base de datos ─────────────────────────────
+REM -- Crear la base de datos --
 echo.
 echo Creando base de datos "%DB_NAME%"...
 set PGPASSWORD=%PG_PASS%
 "%PSQL_PATH%\psql.exe" -U postgres -c "CREATE DATABASE %DB_NAME%;" 2>nul
 if errorlevel 1 (
-    echo [AVISO] La base de datos ya existe o hubo un error al crearla.
-    echo         Si ya existe, se continuará igual.
+    echo [AVISO] La base de datos ya existe o hubo un error. Se continua igual.
 ) else (
     echo [OK] Base de datos "%DB_NAME%" creada.
 )
 
-REM ── Crear entorno virtual ──────────────────────────────
+REM -- Crear entorno virtual --
 echo.
 echo Creando entorno virtual...
 if not exist "venv" (
@@ -111,7 +109,7 @@ if not exist "venv" (
     echo [OK] El entorno virtual ya existe, se omite.
 )
 
-REM ── Instalar dependencias ──────────────────────────────
+REM -- Instalar dependencias --
 echo.
 echo Instalando dependencias (puede tardar unos minutos)...
 call venv\Scripts\activate.bat
@@ -120,14 +118,14 @@ if errorlevel 1 (
     color 0C
     echo.
     echo [ERROR] Hubo un problema instalando las dependencias.
-    echo Revisá tu conexión a internet e intentá de nuevo.
+    echo Revisa tu conexion a internet e intenta de nuevo.
     pause
     exit /b 1
 )
 echo.
 echo [OK] Dependencias instaladas correctamente.
 
-REM ── Crear archivo .env automáticamente ───────────────────
+REM -- Crear archivo .env --
 echo.
 if not exist ".env" (
     echo Creando archivo .env...
@@ -135,12 +133,12 @@ if not exist ".env" (
         echo DATABASE_URL=postgresql://postgres:%PG_PASS%@localhost:5432/%DB_NAME%
         echo SECRET_KEY=cabina-solar-clave-secreta-%RANDOM%%RANDOM%
     ) > .env
-    echo [OK] Archivo .env creado automáticamente.
+    echo [OK] Archivo .env creado automaticamente.
 ) else (
     echo [OK] Archivo .env ya existe, no se sobreescribe.
 )
 
-REM ── Aplicar migraciones ───────────────────────────────
+REM -- Aplicar migraciones --
 echo.
 echo Aplicando migraciones de base de datos...
 set FLASK_APP=run.py
@@ -149,15 +147,15 @@ if errorlevel 1 (
     color 0C
     echo.
     echo [ERROR] No se pudieron aplicar las migraciones.
-    echo Verificá que la contraseña de PostgreSQL sea correcta
-    echo y que el servicio de PostgreSQL esté corriendo.
+    echo Verifica que la contrasena de PostgreSQL sea correcta
+    echo y que el servicio de PostgreSQL este corriendo.
     echo.
     pause
     exit /b 1
 )
 echo [OK] Base de datos lista.
 
-REM ── Generar seed.py temporal y ejecutarlo ──────────────────
+REM -- Crear usuario admin --
 echo.
 echo Creando usuario administrador...
 (
@@ -183,31 +181,28 @@ echo Creando usuario administrador...
     echo     else:
     echo         print^('El usuario ya existe, se omite'^)
 ) > _seed_temp.py
-
 python _seed_temp.py
 if errorlevel 1 (
     color 0C
     echo.
     echo [ERROR] No se pudo crear el usuario administrador.
-    pause
     del _seed_temp.py >nul 2>&1
+    pause
     exit /b 1
 )
-
-REM Borrar el seed temporal (contiene la contraseña en texto plano)
 del _seed_temp.py >nul 2>&1
 echo [OK] Usuario "%ADMIN_USER%" creado.
 
 echo.
 echo ============================================
-echo   INSTALACIÓN COMPLETADA CON ÉXITO ✓
+echo   INSTALACION COMPLETADA CON EXITO
 echo ============================================
 echo.
-echo Datos de acceso a la aplicación:
+echo Datos de acceso a la aplicacion:
 echo   Usuario:    %ADMIN_USER%
-echo   Contraseña: %ADMIN_PASS%
+echo   Contrasena: %ADMIN_PASS%
 echo.
-echo Para iniciar la aplicación usá el archivo:
+echo Para iniciar la aplicacion usa el archivo:
 echo   INICIAR_APP.bat
 echo.
 pause

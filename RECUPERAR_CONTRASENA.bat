@@ -1,60 +1,60 @@
 @echo off
-chcp 65001 >nul
-title Cabina Solar - Recuperar Contraseña
+chcp 1252 >nul
+title Cabina Solar - Recuperar Contrasena
 color 0E
 
 echo ============================================
-echo   CABINA SOLAR - RECUPERAR CONTRASEÑA
+echo   CABINA SOLAR - RECUPERAR CONTRASENA
 echo ============================================
 echo.
 
-REM ── Verificar que existe el entorno virtual ─────────────
+REM -- Verificar entorno virtual --
 if not exist "venv\Scripts\activate.bat" (
     color 0C
-    echo [ERROR] No se encontró el entorno virtual.
-    echo Primero ejecutá INSTALAR_PRIMERA_VEZ.bat
+    echo [ERROR] No se encontro el entorno virtual.
+    echo Primero ejecuta INSTALAR_PRIMERA_VEZ.bat
     echo.
     pause
     exit /b 1
 )
 
-REM ── Verificar que existe .env ─────────────────────────
+REM -- Verificar .env --
 if not exist ".env" (
     color 0C
-    echo [ERROR] No se encontró el archivo .env
-    echo Primero ejecutá INSTALAR_PRIMERA_VEZ.bat
+    echo [ERROR] No se encontro el archivo .env
+    echo Primero ejecuta INSTALAR_PRIMERA_VEZ.bat
     echo.
     pause
     exit /b 1
 )
 
-echo Este script te permite cambiar la contraseña de cualquier
-echo usuario sin necesidad de entrar a la aplicación.
+echo Este script te permite cambiar la contrasena de cualquier
+echo usuario sin necesidad de entrar a la aplicacion.
 echo.
 
-REM ── Pedir datos ─────────────────────────────────
-set /p TARGET_USER=Nombre de usuario a recuperar [Admin]: 
+REM -- Pedir datos --
+set /p TARGET_USER=Nombre de usuario a recuperar (Enter = Admin): 
 if "%TARGET_USER%"=="" set TARGET_USER=Admin
 
-set /p NEW_PASS=Nueva contraseña: 
+set /p NEW_PASS=Nueva contrasena: 
 if "%NEW_PASS%"=="" (
     color 0C
-    echo [ERROR] La contraseña no puede estar vacía.
+    echo [ERROR] La contrasena no puede estar vacia.
     pause
     exit /b 1
 )
 
-set /p CONFIRM_PASS=Confirmá la contraseña: 
+set /p CONFIRM_PASS=Confirma la contrasena: 
 if not "%NEW_PASS%"=="%CONFIRM_PASS%" (
     color 0C
     echo.
-    echo [ERROR] Las contraseñas no coinciden. Intentá de nuevo.
+    echo [ERROR] Las contrasenias no coinciden. Intenta de nuevo.
     echo.
     pause
     exit /b 1
 )
 
-REM ── Activar entorno y generar script temporal ────────────
+REM -- Activar entorno y ejecutar reset --
 call venv\Scripts\activate.bat
 
 (
@@ -78,8 +78,8 @@ python _reset_temp.py
 if errorlevel 1 (
     color 0C
     echo.
-    echo [ERROR] No se pudo actualizar la contraseña.
-    echo Verificá que el nombre de usuario sea correcto.
+    echo [ERROR] No se pudo actualizar la contrasena.
+    echo Verifica que el nombre de usuario sea correcto.
     echo.
     del _reset_temp.py >nul 2>&1
     pause
@@ -90,13 +90,12 @@ del _reset_temp.py >nul 2>&1
 
 echo.
 echo ============================================
-echo   CONTRASEÑA ACTUALIZADA CON ÉXITO ✓
+echo   CONTRASENA ACTUALIZADA CON EXITO
 echo ============================================
 echo.
-echo   Usuario:         %TARGET_USER%
-echo   Nueva contraseña: %NEW_PASS%
+echo   Usuario:          %TARGET_USER%
+echo   Nueva contrasena: %NEW_PASS%
 echo.
-echo Ahora podés iniciar la app con INICIAR_APP.bat
-echo y entrar con los nuevos datos.
+echo Ahora podes iniciar la app con INICIAR_APP.bat
 echo.
 pause
