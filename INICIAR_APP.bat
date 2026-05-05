@@ -3,13 +3,15 @@ chcp 1252 >nul
 title Cabina Solar - Servidor
 color 0A
 
+cd /d %~dp0
+
 echo ============================================
 echo   CABINA SOLAR - INICIANDO SERVIDOR
 echo ============================================
 echo.
 
 REM -- Verificar entorno virtual --
-if not exist "venv\Scripts\activate.bat" (
+if not exist "venv\Scripts\python.exe" (
     color 0C
     echo [ERROR] No se encontro el entorno virtual.
     echo.
@@ -30,9 +32,6 @@ if not exist ".env" (
     exit /b 1
 )
 
-REM -- Activar entorno virtual --
-call venv\Scripts\activate.bat
-
 REM -- Mostrar URLs de acceso --
 echo [OK] Entorno listo.
 echo.
@@ -52,8 +51,7 @@ echo Cierra esta ventana para apagar el servidor.
 echo ============================================
 echo.
 
-set FLASK_APP=run.py
-python run.py
+venv\Scripts\python.exe run.py
 
 echo.
 echo [INFO] Servidor detenido.

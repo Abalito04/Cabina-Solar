@@ -8,8 +8,10 @@ echo   CABINA SOLAR - RECUPERAR CONTRASENA
 echo ============================================
 echo.
 
+cd /d %~dp0
+
 REM -- Verificar entorno virtual --
-if not exist "venv\Scripts\activate.bat" (
+if not exist "venv\Scripts\python.exe" (
     color 0C
     echo [ERROR] No se encontro el entorno virtual.
     echo Primero ejecuta INSTALAR_PRIMERA_VEZ.bat
@@ -54,9 +56,7 @@ if not "%NEW_PASS%"=="%CONFIRM_PASS%" (
     exit /b 1
 )
 
-REM -- Activar entorno y ejecutar reset --
-call venv\Scripts\activate.bat
-
+REM -- Generar y ejecutar script temporal --
 (
     echo from dotenv import load_dotenv
     echo load_dotenv^(^)
@@ -74,7 +74,7 @@ call venv\Scripts\activate.bat
     echo     print^('Contrasena actualizada correctamente'^)
 ) > _reset_temp.py
 
-python _reset_temp.py
+venv\Scripts\python.exe _reset_temp.py
 if errorlevel 1 (
     color 0C
     echo.
