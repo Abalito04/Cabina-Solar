@@ -26,7 +26,7 @@ def create_app():
         raise RuntimeError("SECRET_KEY no está definida en las variables de entorno")
 
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
-    app.config['SESSION_COOKIE_SECURE']      = True
+    app.config['SESSION_COOKIE_SECURE']      = False
     app.config['SESSION_COOKIE_HTTPONLY']    = True
     app.config['SESSION_COOKIE_SAMESITE']    = 'Lax'
     app.config['WTF_CSRF_ENABLED']           = True
