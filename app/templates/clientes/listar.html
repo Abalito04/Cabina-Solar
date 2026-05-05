@@ -29,10 +29,10 @@
                     <td>
                         {% if cliente.saldo_pesos < 0 %}
                             <span class="fw-bold" style="color:var(--cs-danger)">
-                                -${{ '%.2f'|format(cliente.saldo_pesos|abs) }}
+                                -${{ cliente.saldo_pesos|abs|moneda }}
                             </span>
                         {% else %}
-                            <span style="color:var(--cs-success)">$0.00</span>
+                            <span style="color:var(--cs-success)">$0</span>
                         {% endif %}
                     </td>
                     <td class="text-end">
@@ -80,10 +80,10 @@
                     <div class="small mt-1">
                         {% if cliente.saldo_pesos < 0 %}
                             <span class="fw-bold" style="color:var(--cs-danger)">
-                                -${{ '%.2f'|format(cliente.saldo_pesos|abs) }}
+                                -${{ cliente.saldo_pesos|abs|moneda }}
                             </span>
                         {% else %}
-                            <span style="color:var(--cs-success)">$0.00</span>
+                            <span style="color:var(--cs-success)">$0</span>
                         {% endif %}
                     </div>
                 </div>

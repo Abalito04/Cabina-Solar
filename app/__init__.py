@@ -53,6 +53,14 @@ def create_app():
     with app.app_context():
         from . import models
 
+    # ── Filtro personalizado: formato de moneda sin decimales con punto como separador de miles
+    @app.template_filter('moneda')
+    def moneda_filter(value):
+        try:
+            return f"{int(round(float(value))):,}".replace(',', '.')
+        except (ValueError, TypeError):
+            return value
+
     @app.template_global()
     def google_calendar_url(turno):
         from urllib.parse import urlencode
